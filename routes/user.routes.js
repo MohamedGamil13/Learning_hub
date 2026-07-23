@@ -6,11 +6,11 @@ const { validationResult } = require("express-validator");
 userRouter.post("/register", registerValidator, (req, res) => {
   const resivedData = req.body;
   const errors = validationResult(req);
-  if (!errors.notEmpty()) {
+  if (!errors.isEmpty()) {
     return res.status(400).json({
       status: responseStatus.FAIL,
       data: {
-        msg: `not Valid data ${errors.array()}`,
+        msg: errors.array(),
       },
     });
   }
