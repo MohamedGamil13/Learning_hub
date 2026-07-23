@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const UserTypes = require("../utils/user.types");
+const UserTypes = require("../constants/user.types");
 const Schema = mongoose.Schema;
 
 const User = new Schema({
