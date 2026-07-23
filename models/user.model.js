@@ -11,6 +11,7 @@ const userSchema = new Schema(
     role: {
       type: String,
       required: true,
+      toLowerCase: true,
       enum: [
         UserTypes.STUDENT,
         UserTypes.INSTRUCTOR,
@@ -27,7 +28,7 @@ const userSchema = new Schema(
       match: [emailRegex, "Email Is Not Valid"],
       unique: true,
     },
-    password: { type: String, required: true, minLength: 8 },
+    password: { type: String, required: true, minLength: 8, select: false },
     avatar: { type: String, default: "" },
     bio: { type: String, required: false },
   },

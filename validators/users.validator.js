@@ -1,6 +1,6 @@
 const { checkSchema } = require("express-validator");
 const UserTypes = require("../constants/user.types");
-
+const checkEmailExist = require("../utils/check.email.exist");
 const registerValidator = checkSchema({
   name: {
     isString: true,
@@ -20,6 +20,9 @@ const registerValidator = checkSchema({
     isEmail: true,
     normalizeEmail: true,
     errorMessage: "Invalid email",
+    custom: {
+      options: checkEmailExist,
+    },
   },
   role: {
     isIn: {
