@@ -1,9 +1,12 @@
 const userModel = require("../models/user.model");
 const bcrypt = require("bcrypt");
 const asnycWrapper = require("../middlewares/asnyc.wrapper");
-const saltRounds = 10;
 const UserTypes = require("../constants/user.types");
 const displayUser = require("../utils/display.user");
+const responseStatus = require("../constants/response.status");
+
+const saltRounds = 10;
+
 const regController = asnycWrapper(async (req, res) => {
   const { name, email, password } = req.body;
   const hashedPassword = await bcrypt.hash(password, saltRounds);
