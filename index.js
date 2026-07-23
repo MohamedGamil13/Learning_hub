@@ -18,12 +18,22 @@ connectDB();
 app.get("/", (req, res) => {
   res.send("Hello World");
 });
-// For none Existing Routes
+// For none Existing Rout
 app.use((req, res) => {
   res.status(404).json({
     status: responseStatus.FAIL,
     data: {
       msg: "Route is not found",
+    },
+  });
+});
+
+//global Error Handlar
+app.use((error, req, res, next) => {
+  res.status(error.statusCode || 500).json({
+    status: responseStatus.ERROR,
+    data: {
+      error: error.message,
     },
   });
 });
