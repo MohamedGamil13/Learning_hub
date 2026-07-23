@@ -7,5 +7,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(process.env.PORT_NUMBER, () => {
-  console.log("Server is running on http://localhost:3000");
+  console.log("Server is running ");
 });
