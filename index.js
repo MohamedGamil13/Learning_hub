@@ -4,10 +4,12 @@ const app = express();
 const connectDB = require("./config/db.config");
 const cors = require("cors");
 const responseStatus = require("./constants/response.status");
+const userRouter = require("./routes/user.routes");
 // Middle WaresUsage
 app.use(express.static("uploads"));
 app.use(cors());
 app.use(express.json());
+app.use("/api/users/", userRouter);
 
 //connect DB
 connectDB();

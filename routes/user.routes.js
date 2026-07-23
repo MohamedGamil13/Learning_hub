@@ -1,8 +1,22 @@
 const express = require("express");
 const userRouter = express.Router();
 const responseStatus = require("../constants/response.status");
-userRouter.post("/api/users/register", (req, res) => {
-  const userdata = req.body;
+const { registerValidator } = require("../validators/users.validator");
+const { validationResult } = require("express-validator");
+userRouter.post("/register", registerValidator, (req, res) => {
+  const resivedData = req.body;
+  const errors = validationResult(req);
+  if (!errors.notEmpty()) {
+    return res.status(400).json({
+      status: responseStatus.FAIL,
+      data: {
+        msg: `not Valid data ${errors.array()}`,
+      },
+    });
+  }
+  res.status(200).json({
+    resivedData,
+  });
 });
 
 //get all Users
@@ -13,3 +27,4 @@ userRouter.post("/api/users/register", (req, res) => {
 } 
 
 */
+module.exports = userRouter;
