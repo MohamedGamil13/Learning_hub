@@ -8,8 +8,8 @@ const {
 } = require("../controllers/user.controller");
 userRouter.post(
   "/register",
-  validationMiddleware,
   registerValidator,
+  validationMiddleware,
   regController,
 );
 // userRouter.get("/signIn");
