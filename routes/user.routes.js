@@ -11,18 +11,9 @@ const {
 } = require("../controllers/user.controller");
 
 //reg Route
-userRouter.post(
-  "/register",
-  registerValidator,
-  validationMiddleware,
-  regController,
-);
 
-//login Route
-userRouter.post(
-  "/login",
-  loginValidator,
-  validationMiddleware,
-  loginController,
-);
+userRouter
+  .post("/register", registerValidator, validationMiddleware, regController)
+  .post("/login", loginValidator, validationMiddleware, loginController);
+
 module.exports = userRouter;
