@@ -18,7 +18,7 @@ connectDB();
 app.get("/", (req, res) => {
   res.send("Hello World");
 });
-// For none Existing Rout
+// For none Existing Route
 app.use((req, res) => {
   res.status(404).json({
     status: responseStatus.FAIL,

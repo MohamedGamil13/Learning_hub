@@ -4,6 +4,7 @@ const asnycWrapper = require("../middlewares/asnyc.wrapper");
 const UserTypes = require("../constants/user.types");
 const displayUser = require("../utils/display.user");
 const responseStatus = require("../constants/response.status");
+const jwt = require("jsonwebtoken");
 
 const saltRounds = 10;
 
