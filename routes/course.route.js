@@ -2,6 +2,7 @@ const express = require("express");
 const coursesRouter = express.Router();
 
 const asnycWrapper = require("../middlewares/asnyc.wrapper");
+const authMiddleware = require("../middlewares/auth.middleware"); // التأكد من هوية المستخدم
 const authorize = require("../middlewares/authorization");
 const UserTypes = require("../constants/user.types");
 const validationMiddleware = require("../middlewares/validation.middleware");
@@ -9,8 +10,6 @@ const validationMiddleware = require("../middlewares/validation.middleware");
 // Validation Rules Import
 const {
   validateCourseId,
-  validateInstructorId,
-  validateStudentId,
   createCourseValidation,
   updateCourseValidation,
 } = require("../validators/course.validation");
@@ -24,10 +23,26 @@ const {
   addCourse,
 } = require("../controllers/course.controller");
 
-// Get all Courses (No validations needed, but middleware safe to pass)
+// 1. Get All Courses
 coursesRouter.get("/", getAllCourses);
 
-// Get Course by ID
+// 2. Get Enrolled Courses (للـ Student الحالي)
+coursesRouter.get(
+  "/enrolled_courses",
+  authMiddleware,
+  authorize(UserTypes.STUDENT, UserTypes.ADMIN),
+  getEnrolledCourses,
+);
+
+// 3. Get My Added Courses (للـ Instructor الحالي)
+coursesRouter.get(
+  "/added_courses",
+  authMiddleware,
+  authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
+  getAddedCourses,
+);
+
+// 4. Get Course by ID
 coursesRouter.get(
   "/:courseId",
   validateCourseId,
@@ -35,77 +50,35 @@ coursesRouter.get(
   getCourseById,
 );
 
-// Get Enrolled Courses for a Student
-coursesRouter.get(
-  "/enrolled_courses/:studentId",
-  authorize(UserTypes.STUDENT, UserTypes.ADMIN),
-  validateStudentId,
-  validationMiddleware,
-  getEnrolledCourses,
-);
-
-// Get My Added Courses for an Instructor
-coursesRouter.get(
-  "/added_courses/:instructorId",
-  authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
-  validateInstructorId,
-  validationMiddleware,
-  getAddedCourses,
-);
-
-// Add Course
+// 5. Add Course
 coursesRouter.post(
   "/",
+  authMiddleware,
   authorize(UserTypes.ADMIN, UserTypes.INSTRUCTOR),
   createCourseValidation,
   validationMiddleware,
   addCourse,
 );
 
-// Delete Course
-coursesRouter.delete(
-  "/:courseId",
-  authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
-  validateCourseId,
-  validationMiddleware,
-  asnycWrapper(/* TODO: deleteCourse controller */),
-);
-
-// Publish Course
-coursesRouter.patch(
-  "/:courseId/publish",
-  authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
-  validateCourseId,
-  validationMiddleware,
-  asnycWrapper(/* TODO: publishCourse controller */),
-);
-
-// Unpublish Course
-coursesRouter.patch(
-  "/:courseId/unpublish",
-  authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
-  validateCourseId,
-  validationMiddleware,
-  asnycWrapper(/* TODO: unpublishCourse controller */),
-);
-
-// Upload Thumbnail
-coursesRouter.patch(
-  "/:courseId/thumbnail",
-  authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
-  validateCourseId,
-  validationMiddleware,
-  asnycWrapper(/* TODO: uploadThumbnail controller */),
-);
-
-// Edit Course
+// 6. Edit Course
 coursesRouter.patch(
   "/:courseId",
+  authMiddleware,
   authorize(UserTypes.ADMIN, UserTypes.INSTRUCTOR),
   validateCourseId,
   updateCourseValidation,
   validationMiddleware,
   asnycWrapper(/* TODO: editCourse controller */),
+);
+
+// 7. Delete Course
+coursesRouter.delete(
+  "/:courseId",
+  authMiddleware,
+  authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
+  validateCourseId,
+  validationMiddleware,
+  asnycWrapper(/* TODO: deleteCourse controller */),
 );
 
 module.exports = coursesRouter;

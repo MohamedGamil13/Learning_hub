@@ -1,18 +1,34 @@
 const jwt = require("jsonwebtoken");
+
 module.exports = (req, res, next) => {
-  const { authorization } = req.header.authorization;
-  if (!authorization) {
-    throw new Error("Unauthorized");
+  const authHeader = req.headers.authorization || req.headers.Authorization;
+
+  if (!authHeader) {
+    return res
+      .status(401)
+      .json({ status: "fail", message: "Token is required / Unauthorized" });
   }
-  const token = authorization.split(" ")[1];
-  const Bearer = authorization.split(" ")[0];
-  if (Bearer !== "Bearer") {
-    throw new Error("Not Valid Authheader");
+
+  const parts = authHeader.split(" ");
+  const bearer = parts[0];
+  const token = parts[1];
+
+  if (bearer !== "Bearer" || !token) {
+    return res.status(401).json({
+      status: "fail",
+      message: "Invalid Token format. Format must be: Bearer <token>",
+    });
   }
-  const decoded = jwt.verify(token, process.env.JWT_SECERT_KEY);
-  if (!authorization) {
-    throw new Error("401 Unauthorized");
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECERT_KEY);
+
+    // هنا بيتم تحديد الـ req.user للـ Controllers القادمة
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res
+      .status(401)
+      .json({ status: "fail", message: "Invalid or expired token" });
   }
-  req.user = decoded;
-  next();
 };

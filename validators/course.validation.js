@@ -5,15 +5,7 @@ const validateCourseId = [
   param("courseId").isMongoId().withMessage("Invalid Course ID"),
 ];
 
-const validateInstructorId = [
-  param("instructorId").isMongoId().withMessage("Invalid Instructor ID"),
-];
-
-const validateStudentId = [
-  param("studentId").isMongoId().withMessage("Invalid Student ID"),
-];
-
-// Create Course Validation
+// Create Course Validation (بدون instructor لأن الـ Backend بيجيبها من الـ Token)
 const createCourseValidation = [
   body("title").notEmpty().withMessage("Title is required").isString().trim(),
 
@@ -22,12 +14,6 @@ const createCourseValidation = [
     .withMessage("Description is required")
     .isString()
     .trim(),
-
-  body("instructor")
-    .notEmpty()
-    .withMessage("Instructor ID is required")
-    .isMongoId()
-    .withMessage("Invalid Instructor ID"),
 
   body("price")
     .notEmpty()
@@ -43,7 +29,7 @@ const createCourseValidation = [
     .withMessage("Published field must be a boolean"),
 ];
 
-// Update Course Validation (Optional fields)
+// Update Course Validation
 const updateCourseValidation = [
   body("title").optional().isString().trim(),
   body("description").optional().isString().trim(),
@@ -60,8 +46,6 @@ const updateCourseValidation = [
 
 module.exports = {
   validateCourseId,
-  validateInstructorId,
-  validateStudentId,
   createCourseValidation,
   updateCourseValidation,
 };

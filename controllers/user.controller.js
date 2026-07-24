@@ -12,6 +12,7 @@ const regController = asnycWrapper(async (req, res) => {
   const { name, email, password } = req.body;
   const hashedPassword = await bcrypt.hash(password, saltRounds);
 
+  // تسجل دائماً كـ STUDENT وأنت كـ Admin ترفع حسابه من الداشبورد
   const user = await userModel.create({
     name,
     email,
@@ -19,8 +20,11 @@ const regController = asnycWrapper(async (req, res) => {
     role: UserTypes.STUDENT,
   });
 
-  const token = jwtGenerator({ email: email, id: user.id, role: user.role });
-
+  const token = jwtGenerator({
+    email: user.email,
+    id: user.id,
+    role: user.role,
+  });
   const userObject = displayUser(user);
 
   res.status(201).json({
@@ -32,19 +36,25 @@ const regController = asnycWrapper(async (req, res) => {
   });
 });
 
-const loginController = asnycWrapper(async (req, res, next) => {
+const loginController = asnycWrapper(async (req, res) => {
   const { email, password } = req.body;
 
   const user = await userModel.findOne({ email }).select("+password");
 
   if (!user) {
-    throw new Error("User does not exist");
+    return res.status(400).json({
+      status: responseStatus.FAIL,
+      message: "User does not exist",
+    });
   }
 
   const isPasswordTrue = await bcrypt.compare(password, user.password);
 
   if (!isPasswordTrue) {
-    throw new Error("Wrong password");
+    return res.status(400).json({
+      status: responseStatus.FAIL,
+      message: "Wrong password",
+    });
   }
 
   const token = jwtGenerator({
