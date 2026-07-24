@@ -63,11 +63,11 @@ const getAddedCourses = asnycWrapper(async (req, res) => {
 
 // 5. Add New Course
 const addCourse = asnycWrapper(async (req, res) => {
-  const newCourse = await Course.create({
+  let newCourse = await Course.create({
     ...req.body,
     instructor: req.user.id,
   });
-
+  newCourse = await newCourse.populate("instructor", "name email");
   return res.status(201).json({
     status: responseStatus.SUCCESS,
     data: { course: newCourse },
