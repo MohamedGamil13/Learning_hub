@@ -59,9 +59,6 @@ const loginValidator = checkSchema({
       bail: true,
     },
     normalizeEmail: true,
-    custom: {
-      options: checkEmailExist,
-    },
   },
   password: {
     notEmpty: {

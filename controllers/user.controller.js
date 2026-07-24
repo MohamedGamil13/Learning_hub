@@ -4,7 +4,7 @@ const asnycWrapper = require("../middlewares/asnyc.wrapper");
 const UserTypes = require("../constants/user.types");
 const displayUser = require("../utils/display.user");
 const responseStatus = require("../constants/response.status");
-const jwtGenrator = require("../utils/generate.token");
+const jwtGenerator = require("../utils/generate.token");
 
 const saltRounds = 10;
 
@@ -19,7 +19,7 @@ const regController = asnycWrapper(async (req, res) => {
     role: UserTypes.STUDENT,
   });
 
-  const token = jwtGenrator({ email: email, id: user.id });
+  const token = jwtGenerator({ email: email, id: user.id });
 
   const userObject = displayUser(user);
 
@@ -35,7 +35,7 @@ const regController = asnycWrapper(async (req, res) => {
 const loginController = asnycWrapper(async (req, res, next) => {
   const { email, password } = req.body;
 
-  const user = await userModel.findOne({ email });
+  const user = await userModel.findOne({ email }).select("+password");
 
   if (!user) {
     throw new Error("User does not exist");
