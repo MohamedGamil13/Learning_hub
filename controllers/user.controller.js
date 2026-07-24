@@ -19,7 +19,7 @@ const regController = asnycWrapper(async (req, res) => {
     role: UserTypes.STUDENT,
   });
 
-  const token = jwtGenerator({ email: email, id: user.id });
+  const token = jwtGenerator({ email: email, id: user.id, role: user.role });
 
   const userObject = displayUser(user);
 
@@ -50,6 +50,7 @@ const loginController = asnycWrapper(async (req, res, next) => {
   const token = jwtGenerator({
     id: user.id,
     email: user.email,
+    role: user.role,
   });
 
   const userObject = displayUser(user);
