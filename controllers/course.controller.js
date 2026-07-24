@@ -107,9 +107,18 @@ const getAddedCourses = asnycWrapper(async (req, res) => {
   });
 });
 
+const addCourse = asnycWrapper(async (req, res) => {
+  const { title, price } = req.body;
+  const course = await Course.create({
+    title: title,
+    price: price,
+  });
+});
+
 module.exports = {
   getAllCourses,
   getCourseById,
   getEnrolledCourses,
   getAddedCourses,
+  addCourse,
 };

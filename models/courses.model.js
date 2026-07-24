@@ -16,6 +16,7 @@ const coureSchema = new Schema({
   },
   thumbnail: {
     type: String,
+    default: "",
   },
   published: {
     type: Boolean,
