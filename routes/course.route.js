@@ -6,6 +6,7 @@ const {
   getAllCourses,
   getCourseById,
   getEnrolledCourses,
+  getAddedCourses,
 } = require("../controllers/course.controller");
 const UserTypes = require("../constants/user.types");
 //route
@@ -14,14 +15,18 @@ coursesRouter.get("/", getAllCourses);
 //get course by id (for all) done
 coursesRouter.get("/:courseId", getCourseById);
 
-//get enrollerd Courses (for Students Only)
+//get enrollerd Courses (for Students Only) done
 coursesRouter.get(
-  "/enrolled_courses",
+  "/enrolled_courses/:studentId",
   authorize(UserTypes.STUDENT, UserTypes.ADMIN),
   getEnrolledCourses,
 );
-//get my Courses  (for instructor who add This Course)
-coursesRouter.get("/", asnycWrapper());
+//get my Courses  (for instructor who add This Course) done
+coursesRouter.get(
+  "/added_courses/:instructorId",
+  authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
+  getAddedCourses,
+);
 //add Course (For Admin,Instructor Only)
 coursesRouter.post("/", asnycWrapper());
 //delete Course  (for instructor who add This Course , for admin )

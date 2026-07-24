@@ -1,55 +1,115 @@
 const Course = require("../models/courses.model");
+const Enrollment = require("../models/enrollment.model");
 const asnycWrapper = require("../middlewares/asnyc.wrapper");
-const UserTypes = require("../constants/user.types");
 const responseStatus = require("../constants/response.status");
-const isValidNumber = require("../utils/check.valid.number");
 const mongoose = require("mongoose");
 
+// 1. Get All Courses
 const getAllCourses = asnycWrapper(async (req, res) => {
-  const allCourses = await Course.find();
-  if (!allCourses) {
-    throw new Error("Server Error");
-  }
+  const allCourses = await Course.find().populate("instructor", "name email");
+
   if (allCourses.length === 0) {
     return res.status(200).json({
       status: responseStatus.FAIL,
       message: "No Courses Yet",
-      data: {
-        courses: allCourses,
-      },
+      data: { courses: [] },
     });
   }
-  res.status(200).json({
+
+  return res.status(200).json({
     status: responseStatus.SUCCESS,
-    data: {
-      courses: allCourses,
-    },
+    data: { courses: allCourses },
   });
 });
 
+// 2. Get Single Course By ID
 const getCourseById = asnycWrapper(async (req, res) => {
-  const courseId = req.params.courseId;
-  if (mongoose.isValidObjectId(courseId)) {
-    const course = await Course.findById(courseId);
-    if (!course) {
-      return res.status(200).json({
-        status: responseStatus.FAIL,
-        message: "No Courses Found",
-      });
-    }
-    res.status(200).json({
-      status: responseStatus.SUCCESS,
-      data: {
-        course: course,
-      },
+  const { courseId } = req.params;
+
+  if (!mongoose.isValidObjectId(courseId)) {
+    return res.status(400).json({
+      status: responseStatus.FAIL,
+      message: "Course ID is not valid",
     });
   }
-  res.status(400).json({
-    status: responseStatus.ERROR,
-    message: "Course Id is not Vaild",
+
+  const course = await Course.findById(courseId).populate(
+    "instructor",
+    "name email",
+  );
+
+  if (!course) {
+    return res.status(404).json({
+      status: responseStatus.FAIL,
+      message: "No Course Found",
+    });
+  }
+
+  return res.status(200).json({
+    status: responseStatus.SUCCESS,
+    data: { course },
   });
 });
 
-const getEnrolledCourses = asnycWrapper(async (req, res) => {});
+// 3. Get Enrolled Courses for a Student
+const getEnrolledCourses = asnycWrapper(async (req, res) => {
+  const { studentId } = req.params;
 
-module.exports = { getAllCourses, getCourseById, getEnrolledCourses };
+  if (!mongoose.isValidObjectId(studentId)) {
+    return res.status(400).json({
+      status: responseStatus.FAIL,
+      message: "Student ID is not valid",
+    });
+  }
+
+  const enrolledCourses = await Enrollment.find({
+    student: studentId,
+  }).populate("course");
+
+  if (enrolledCourses.length === 0) {
+    return res.status(200).json({
+      status: responseStatus.FAIL,
+      message: "No Enrolled Courses Found",
+      data: { courses: [] },
+    });
+  }
+
+  return res.status(200).json({
+    status: responseStatus.SUCCESS,
+    data: { courses: enrolledCourses },
+  });
+});
+
+// 4. Get Courses Created by an Instructor
+const getAddedCourses = asnycWrapper(async (req, res) => {
+  const { instructorId } = req.params;
+
+  if (!mongoose.isValidObjectId(instructorId)) {
+    return res.status(400).json({
+      status: responseStatus.FAIL,
+      message: "Instructor ID is not valid",
+    });
+  }
+
+  const addedCourses = await Course.find({ instructor: instructorId });
+
+  if (addedCourses.length === 0) {
+    return res.status(200).json({
+      status: responseStatus.FAIL,
+      message: "No Courses Found for this instructor",
+      data: { courses: [] },
+    });
+  }
+
+  return res.status(200).json({
+    status: responseStatus.SUCCESS,
+    data: { courses: addedCourses },
+  });
+});
+
+module.exports = {
+  getAllCourses,
+  getCourseById,
+  getEnrolledCourses,
+  getAddedCourses,
+};
