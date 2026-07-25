@@ -1,10 +1,10 @@
 const Course = require("../models/courses.model");
 const Enrollment = require("../models/enrollment.model");
-const asnycWrapper = require("../middlewares/asnyc.wrapper");
+const asyncWrapper = require("../middlewares/asnyc.wrapper");
 const responseStatus = require("../constants/response.status");
 
 // 1. Get All Courses
-const getAllCourses = asnycWrapper(async (req, res) => {
+const getAllCourses = asyncWrapper(async (req, res) => {
   const allCourses = await Course.find().populate("instructor", "name email");
 
   return res.status(200).json({
@@ -14,7 +14,7 @@ const getAllCourses = asnycWrapper(async (req, res) => {
 });
 
 // 2. Get Single Course By ID
-const getCourseById = asnycWrapper(async (req, res) => {
+const getCourseById = asyncWrapper(async (req, res) => {
   const { courseId } = req.params;
 
   const course = await Course.findById(courseId).populate(
@@ -36,7 +36,7 @@ const getCourseById = asnycWrapper(async (req, res) => {
 });
 
 // 3. Get Enrolled Courses for Logged-in Student
-const getEnrolledCourses = asnycWrapper(async (req, res) => {
+const getEnrolledCourses = asyncWrapper(async (req, res) => {
   const studentId = req.user.id;
 
   const enrolledCourses = await Enrollment.find({
@@ -50,7 +50,7 @@ const getEnrolledCourses = asnycWrapper(async (req, res) => {
 });
 
 // 4. Get Added Courses for Logged-in Instructor
-const getAddedCourses = asnycWrapper(async (req, res) => {
+const getAddedCourses = asyncWrapper(async (req, res) => {
   const instructorId = req.user.id;
 
   const addedCourses = await Course.find({ instructor: instructorId });
@@ -102,7 +102,7 @@ const editCourse = asyncWrapper(async (req, res) => {
   });
 });
 //delete course done
-const deleteCourse = asnycWrapper(async (req, res) => {
+const deleteCourse = asyncWrapper(async (req, res) => {
   const courseId = req.params.courseId;
   const course = await Course.findByIdAndDelete(courseId);
   if (!course) {
