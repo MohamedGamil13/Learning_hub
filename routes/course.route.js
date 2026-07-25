@@ -22,6 +22,7 @@ const {
   getAddedCourses,
   addCourse,
   editCourse,
+  deleteCourse,
 } = require("../controllers/course.controller");
 
 // 1. Get All Courses
@@ -79,7 +80,7 @@ coursesRouter.delete(
   authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
   validateCourseId,
   validationMiddleware,
-  asnycWrapper(/* TODO: deleteCourse controller */),
+  deleteCourse,
 );
 
 module.exports = coursesRouter;

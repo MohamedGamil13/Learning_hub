@@ -62,36 +62,63 @@ const getAddedCourses = asnycWrapper(async (req, res) => {
 });
 
 // 5. Add New Course
-const addCourse = asnycWrapper(async (req, res) => {
-  let newCourse = await Course.create({
+const addCourse = asyncWrapper(async (req, res) => {
+  const newCourse = await Course.create({
     ...req.body,
     instructor: req.user.id,
   });
-  newCourse = await newCourse.populate("instructor", "name email");
+
+  await newCourse.populate("instructor", "name email");
+
   return res.status(201).json({
     status: responseStatus.SUCCESS,
     data: { course: newCourse },
   });
 });
 
-//edit Course
-const editCourse = asnycWrapper(async (req, res) => {
-  const courseId = req.params.courseId;
-  const { title, price, description, thumbnail, published } = req.body;
-  let course = await Course.findById(courseId);
+//edit Course (not True)
+const editCourse = asyncWrapper(async (req, res) => {
+  const { courseId } = req.params;
 
-  course = {
-    ...course,
-    title,
-    price,
-    description,
-    thumbnail,
-    published,
-  };
+  const updatedCourse = await Course.findByIdAndUpdate(courseId, req.body, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!updatedCourse) {
+    return res.status(404).json({
+      status: responseStatus.FAIL,
+      data: {
+        message: "Course Not Found",
+      },
+    });
+  }
+
   res.status(200).json({
     status: responseStatus.SUCCESS,
     data: {
-      course,
+      course: updatedCourse,
+    },
+  });
+});
+//delete course done
+const deleteCourse = asnycWrapper(async (req, res) => {
+  const courseId = req.params.courseId;
+  const course = await Course.findByIdAndDelete(courseId);
+  if (!course) {
+    return res.status(404).json({
+      status: responseStatus.FAIL,
+      data: {
+        message: "Course Not Found",
+      },
+    });
+  }
+  await Course.deleteOne({ id: courseId });
+
+  res.status(200).json({
+    status: responseStatus.SUCCESS,
+    data: {
+      message: "Course Deleted Successfully",
     },
   });
 });
@@ -103,4 +130,5 @@ module.exports = {
   getAddedCourses,
   addCourse,
   editCourse,
+  deleteCourse,
 };
