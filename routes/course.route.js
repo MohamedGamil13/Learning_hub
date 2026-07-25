@@ -2,7 +2,7 @@ const express = require("express");
 const coursesRouter = express.Router();
 
 const asnycWrapper = require("../middlewares/asnyc.wrapper");
-const authMiddleware = require("../middlewares/auth.middleware"); // التأكد من هوية المستخدم
+const authMiddleware = require("../middlewares/auth.middleware");
 const authorize = require("../middlewares/authorization");
 const UserTypes = require("../constants/user.types");
 const validationMiddleware = require("../middlewares/validation.middleware");
@@ -21,12 +21,13 @@ const {
   getEnrolledCourses,
   getAddedCourses,
   addCourse,
+  editCourse,
 } = require("../controllers/course.controller");
 
 // 1. Get All Courses
 coursesRouter.get("/", getAllCourses);
 
-// 2. Get Enrolled Courses (للـ Student الحالي)
+// 2. Get Enrolled Courses
 coursesRouter.get(
   "/enrolled_courses",
   authMiddleware,
@@ -34,7 +35,7 @@ coursesRouter.get(
   getEnrolledCourses,
 );
 
-// 3. Get My Added Courses (للـ Instructor الحالي)
+// 3. Get My Added Courses
 coursesRouter.get(
   "/added_courses",
   authMiddleware,
@@ -68,7 +69,7 @@ coursesRouter.patch(
   validateCourseId,
   updateCourseValidation,
   validationMiddleware,
-  asnycWrapper(/* TODO: editCourse controller */),
+  editCourse,
 );
 
 // 7. Delete Course

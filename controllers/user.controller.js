@@ -12,7 +12,6 @@ const regController = asnycWrapper(async (req, res) => {
   const { name, email, password } = req.body;
   const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-  // تسجل دائماً كـ STUDENT وأنت كـ Admin ترفع حسابه من الداشبورد
   const user = await userModel.create({
     name,
     email,

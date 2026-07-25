@@ -5,7 +5,7 @@ const validateCourseId = [
   param("courseId").isMongoId().withMessage("Invalid Course ID"),
 ];
 
-// Create Course Validation (بدون instructor لأن الـ Backend بيجيبها من الـ Token)
+// Create Course Validation
 const createCourseValidation = [
   body("title").notEmpty().withMessage("Title is required").isString().trim(),
 

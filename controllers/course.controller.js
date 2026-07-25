@@ -74,10 +74,33 @@ const addCourse = asnycWrapper(async (req, res) => {
   });
 });
 
+//edit Course
+const editCourse = asnycWrapper(async (req, res) => {
+  const courseId = req.params.courseId;
+  const { title, price, description, thumbnail, published } = req.body;
+  let course = await Course.findById(courseId);
+
+  course = {
+    ...course,
+    title,
+    price,
+    description,
+    thumbnail,
+    published,
+  };
+  res.status(200).json({
+    status: responseStatus.SUCCESS,
+    data: {
+      course,
+    },
+  });
+});
+
 module.exports = {
   getAllCourses,
   getCourseById,
   getEnrolledCourses,
   getAddedCourses,
   addCourse,
+  editCourse,
 };
