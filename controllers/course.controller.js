@@ -64,6 +64,7 @@ const getAddedCourses = asyncWrapper(async (req, res) => {
 
 // 5. Add New Course
 const addCourse = asyncWrapper(async (req, res) => {
+  //ensure that this Course's owner
   const newCourse = await Course.create({
     ...req.body,
     instructor: req.user.id,
@@ -77,20 +78,13 @@ const addCourse = asyncWrapper(async (req, res) => {
   });
 });
 
-//edit Course (not True)
+//edit Course
 const editCourse = asyncWrapper(async (req, res) => {
   const { courseId } = req.params;
-  const Atoken = await req.headers.authorization;
-  const token = Atoken.split(" ")[1];
-  const decoded = jwt.verify(token, process.env.JWT_SECERT_KEY);
-  console.log(decoded.id);
 
-  const updatedCourse = await Course.findByIdAndUpdate(courseId, req.body, {
-    new: true,
-    runValidators: true,
-  });
+  const course = await Course.findById(courseId);
 
-  if (!updatedCourse) {
+  if (!course) {
     return res.status(404).json({
       status: responseStatus.FAIL,
       data: {
@@ -99,7 +93,26 @@ const editCourse = asyncWrapper(async (req, res) => {
     });
   }
 
-  res.status(200).json({
+  const token = authHeader.split(" ")[1];
+  const decoded = jwt.verify(token, process.env.JWT_SECERT_KEY);
+
+  const isOwner = course.createdBy?.toString() === decoded.id;
+  if (!isOwner) {
+    return res.status(401).json({
+      status: responseStatus.FAIL,
+      data: {
+        message: "Not Authorized (Not Course's Owner)",
+      },
+    });
+  }
+
+  // 4. Update the course
+  const updatedCourse = await Course.findByIdAndUpdate(courseId, req.body, {
+    new: true,
+    runValidators: true,
+  });
+
+  return res.status(200).json({
     status: responseStatus.SUCCESS,
     data: {
       course: updatedCourse,
