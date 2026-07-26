@@ -9,24 +9,18 @@ const logger = require("../utils/logger");
 
 //controllers (Get Course's Lessons done)
 const getCourseLessons = asnycWrapper(async (req, res) => {
-  const courseId = req.params.courseId;
-  logger.info(courseId);
-  const lessons = await Lesson.find({ course: courseId });
-  logger.info(lessons);
+  const { courseId } = req.params;
 
-  if (lessons.length === 0) {
-    return res.status(200).json({
-      status: responseStatus.SUCCESS,
-      data: {
-        message: "No Lessons Found",
-        lessons: lessons,
-      },
-    });
-  }
-  res.status(200).json({
+  const lessons = await Lesson.find({
+    course: courseId,
+  }).sort({
+    order: 1,
+  });
+
+  return res.status(200).json({
     status: responseStatus.SUCCESS,
     data: {
-      lessons: lessons,
+      lessons,
     },
   });
 });
@@ -59,19 +53,30 @@ const getLessonById = asnycWrapper(async (req, res) => {
 
 //add Lesson
 const addLesson = asnycWrapper(async (req, res) => {
-  logger.info("Hii");
-  const courseId = req.params.courseId;
-  logger.info("Course Id is ", courseId);
-  logger.info("Request Body Is ", req.body);
-  const newLesson = await Lesson.create({
-    course: courseId,
+  const { courseId } = req.params;
+  const { order } = req.body;
+
+  await Lesson.updateMany(
+    {
+      course: courseId,
+      order: { $gte: order },
+    },
+    {
+      $inc: {
+        order: 1,
+      },
+    },
+  );
+
+  const lesson = await Lesson.create({
     ...req.body,
+    course: courseId,
   });
 
-  res.status(200).json({
+  res.status(201).json({
     status: responseStatus.SUCCESS,
     data: {
-      lesson: newLesson,
+      lesson,
     },
   });
 });

@@ -7,10 +7,12 @@ const UserTypes = require("../constants/user.types");
 const validationMiddleware = require("../middlewares/validation.middleware");
 
 const { validateCourseId } = require("../validators/course.validation");
+const checkCourseOwners = require("../middlewares/check.course.owner.middleware");
 const {
   validateLessonId,
   createLessonValidation,
   updateLessonValidation,
+  changeLessonOrderValidation,
 } = require("../validators/lesson.validation");
 
 const {
@@ -52,6 +54,7 @@ lessonRouter.post(
   "/",
   authMiddleware,
   authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
+  checkCourseOwners,
   validateCourseId,
   createLessonValidation,
   validationMiddleware,
@@ -63,6 +66,7 @@ lessonRouter.patch(
   "/:lessonId",
   authMiddleware,
   authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
+  checkCourseOwners,
   validateCourseId,
   validateLessonId,
   updateLessonValidation,
@@ -75,6 +79,7 @@ lessonRouter.delete(
   "/:lessonId",
   authMiddleware,
   authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
+  checkCourseOwners,
   validateCourseId,
   validateLessonId,
   validationMiddleware,
@@ -86,8 +91,10 @@ lessonRouter.patch(
   "/:lessonId/order",
   authMiddleware,
   authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
+  checkCourseOwners,
   validateCourseId,
   validateLessonId,
+  changeLessonOrderValidation,
   validationMiddleware,
   changeLessonOrder,
 );
