@@ -1,7 +1,6 @@
 const express = require("express");
 const coursesRouter = express.Router();
 
-const asnycWrapper = require("../middlewares/asnyc.wrapper");
 const authMiddleware = require("../middlewares/auth.middleware");
 const authorize = require("../middlewares/authorization");
 const UserTypes = require("../constants/user.types");
