@@ -2,6 +2,7 @@ const Course = require("../models/courses.model");
 const Enrollment = require("../models/enrollment.model");
 const asyncWrapper = require("../middlewares/asnyc.wrapper");
 const responseStatus = require("../constants/response.status");
+const jwt = require("jsonwebtoken");
 
 // 1. Get All Courses
 const getAllCourses = asyncWrapper(async (req, res) => {
@@ -79,6 +80,10 @@ const addCourse = asyncWrapper(async (req, res) => {
 //edit Course (not True)
 const editCourse = asyncWrapper(async (req, res) => {
   const { courseId } = req.params;
+  const Atoken = await req.headers.authorization;
+  const token = Atoken.split(" ")[1];
+  const decoded = jwt.verify(token, process.env.JWT_SECERT_KEY);
+  console.log(decoded.id);
 
   const updatedCourse = await Course.findByIdAndUpdate(courseId, req.body, {
     new: true,
@@ -113,8 +118,6 @@ const deleteCourse = asyncWrapper(async (req, res) => {
       },
     });
   }
-  await Course.deleteOne({ id: courseId });
-
   res.status(200).json({
     status: responseStatus.SUCCESS,
     data: {
