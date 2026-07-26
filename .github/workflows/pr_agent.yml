@@ -1,0 +1,19 @@
+name: The PR Agent (Gemini Powered)
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  issue_comment:
+    types: [created]
+
+jobs:
+  pr_agent_job:
+    runs-on: ubuntu-latest
+    name: Run PR Agent
+    steps:
+      - name: PR Agent Action
+        uses: The-PR-Agent/pr-agent@v0.40.0
+        env:
+          PR_MODEL: "gemini/gemini-1.5-flash"
+          PALM_API_KEY: ${{ secrets.GEMINI_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
