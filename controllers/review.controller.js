@@ -48,11 +48,6 @@ const addReview = asyncWrapper(async (req, res) => {
   });
 });
 
-const Review = require("../models/review.model");
-const asyncWrapper = require("../middlewares/asnyc.wrapper");
-const responseStatus = require("../constants/response.status");
-
-// 1. Update Review
 const updateReview = asyncWrapper(async (req, res) => {
   const { reviewId } = req.params;
   const updatedReview = req.body;
