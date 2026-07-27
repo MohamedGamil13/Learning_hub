@@ -5,7 +5,18 @@ const authMiddleware = require("../middlewares/auth.middleware");
 const authorize = require("../middlewares/authorization");
 const UserTypes = require("../constants/user.types");
 
-//controllers
+// validation import
+const validationMiddleware = require("../middlewares/validation.middleware");
+
+// 1. Validation Imports
+const {
+  validateCourseId,
+  validateReviewId,
+  createReviewValidation,
+  updateReviewValidation,
+} = require("../validators/review.validation");
+
+// Controller imports
 const {
   addReview,
   updateReview,
@@ -14,17 +25,61 @@ const {
   getReviewById,
 } = require("../controllers/review.controller");
 
-//get Course Reviews
-reviewRouter.get("/:courseId", getCourseReviews);
+// 3. Custom Middlewares
+const checkReviewOwner = require("../middlewares/check.review.owner");
+const checkReviewExist = require("../middlewares/check.review.exist");
 
-//get Review By Id
-reviewRouter.get("/:courseId/:reviewId", getReviewById);
+// ==================== PUBLIC ROUTES ====================
 
-//add Review (for Students Only)
-reviewRouter.post("/:courseId", addReview);
+// Get All Reviews
+reviewRouter.get(
+  "/course/:courseId",
+  validateCourseId,
+  validationMiddleware,
+  getCourseReviews,
+);
 
-//updateReview (for Students only)
-reviewRouter.patch("/:courseId", updateReview);
+// Get  Review
+reviewRouter.get(
+  "/:reviewId",
+  validateReviewId,
+  validationMiddleware,
+  checkReviewExist,
+  getReviewById,
+);
 
-//deleteReview (for Instuctor Only)
-reviewRouter.delete("/:courseId", deleteReview);
+// ==================== PROTECTED ROUTES ====================
+
+// Apply Auth globally for all modifying routes below
+reviewRouter.use(authMiddleware);
+
+// Add Review (Students Only)
+reviewRouter.post(
+  "/:courseId",
+  authorize(UserTypes.STUDENT),
+  validateCourseId,
+  createReviewValidation,
+  validationMiddleware,
+  addReview,
+);
+
+reviewRouter.patch(
+  "/:reviewId",
+  authorize(UserTypes.STUDENT),
+  validateReviewId,
+  updateReviewValidation,
+  validationMiddleware,
+  checkReviewExist,
+  updateReview,
+);
+
+reviewRouter.delete(
+  "/:reviewId",
+  authorize(UserTypes.STUDENT, UserTypes.INSTRUCTOR, UserTypes.ADMIN),
+  validateReviewId,
+  validationMiddleware,
+  checkReviewExist,
+  deleteReview,
+);
+
+module.exports = reviewRouter;
