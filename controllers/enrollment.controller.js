@@ -88,7 +88,6 @@ const cancelEnrollment = asyncWrapper(async (req, res) => {
     data: { cancelEnrollment },
   });
 });
-const updateProgress = asyncWrapper(async (req, res) => {});
 
 module.exports = {
   getStudentEnrollments,

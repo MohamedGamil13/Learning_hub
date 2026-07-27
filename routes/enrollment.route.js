@@ -70,15 +70,6 @@ enrollmentRouter.post(
   enrollCourse,
 );
 
-// 5. updateProgress (For Students)
-enrollmentRouter.patch(
-  "/progress",
-  authorize(UserTypes.STUDENT),
-  updateProgressValidation,
-  validationMiddleware,
-  updateProgress,
-);
-
 // 6. cancelEnrollment (Student, Admin, Instructor)
 enrollmentRouter.delete(
   "/:enrollmentId",
