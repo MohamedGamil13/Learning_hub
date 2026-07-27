@@ -8,7 +8,7 @@ const asnycWrapper = require("../middlewares/asnyc.wrapper");
 const logger = require("../utils/logger");
 
 //controllers (Get Course's Lessons done)
-const getCourseLessons = asnycWrapper(async (req, res) => {
+const getCourseLessons = asyncWrapper(async (req, res) => {
   const { courseId } = req.params;
 
   const lessons = await Lesson.find({
@@ -26,7 +26,7 @@ const getCourseLessons = asnycWrapper(async (req, res) => {
 });
 
 //get Lesson By Id (done)
-const getLessonById = asnycWrapper(async (req, res) => {
+const getLessonById = asyncWrapper(async (req, res) => {
   const courseId = req.params.courseId;
   logger.info(courseId);
   const lessonId = req.params.lessonId;
@@ -52,7 +52,7 @@ const getLessonById = asnycWrapper(async (req, res) => {
 });
 
 //add Lesson
-const addLesson = asnycWrapper(async (req, res) => {
+const addLesson = asyncWrapper(async (req, res) => {
   const { courseId } = req.params;
   const { order } = req.body;
 
@@ -81,7 +81,7 @@ const addLesson = asnycWrapper(async (req, res) => {
   });
 });
 // Edit Lesson
-const editLesson = asnycWrapper(async (req, res) => {
+const editLesson = asyncWrapper(async (req, res) => {
   const { courseId, lessonId } = req.params;
 
   const updatedLesson = await Lesson.findOneAndUpdate(
@@ -103,7 +103,7 @@ const editLesson = asnycWrapper(async (req, res) => {
   });
 });
 // Delete Lesson
-const deleteLesson = asnycWrapper(async (req, res) => {
+const deleteLesson = asyncWrapper(async (req, res) => {
   const { courseId, lessonId } = req.params;
 
   const lessonToDelete = await Lesson.findOneAndDelete({
@@ -129,7 +129,7 @@ const deleteLesson = asnycWrapper(async (req, res) => {
   });
 });
 // Change Single Lesson Order
-const changeLessonOrder = asnycWrapper(async (req, res) => {
+const changeLessonOrder = asyncWrapper(async (req, res) => {
   const { courseId, lessonId } = req.params;
   const { newOrder } = req.body;
 
@@ -179,7 +179,7 @@ const changeLessonOrder = asnycWrapper(async (req, res) => {
   });
 });
 // Bulk Update Lessons Order
-const updateLessonOrder = asnycWrapper(async (req, res) => {
+const updateLessonOrder = asyncWrapper(async (req, res) => {
   const { courseId } = req.params;
   const { lessonsOrder } = req.body;
 

@@ -5,14 +5,13 @@ const authMiddleware = require("../middlewares/auth.middleware");
 const authorize = require("../middlewares/authorization");
 const UserTypes = require("../constants/user.types");
 const validationMiddleware = require("../middlewares/validation.middleware");
-
 // Validation imports
 const {
   validateStudentId,
   validateCourseId,
   validateEnrollmentId,
   updateProgressValidation,
-} = require("../validations/enrollment.validation"); // Adjust path as needed
+} = require("../validators/enrollment.validation");
 
 // Controller imports
 const {
@@ -26,6 +25,7 @@ const {
 
 //middlewares Imports
 const checkEnrollment = require("../middlewares/check.enrollment");
+const checkCourseOwners = require("../middlewares/check.course.owner.middleware");
 
 // Apply auth protection globally to all enrollment routes
 enrollmentRouter.use(authMiddleware);
@@ -44,6 +44,7 @@ enrollmentRouter.get(
   "/course/:courseId",
   authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
   validateCourseId,
+  checkCourseOwners,
   validationMiddleware,
   getCourseStudents,
 );

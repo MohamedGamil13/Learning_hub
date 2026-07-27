@@ -4,7 +4,7 @@ const logger = require("../utils/logger");
 
 module.exports = (...roles) => {
   return (req, res, next) => {
-    logger.info(req.user.role);
+    logger.info("Current User Role is ", req.user.role);
     if (roles.includes(req.user.role)) {
       return next();
     }

@@ -1,5 +1,6 @@
 const Course = require("../models/courses.model");
 const Enrollment = require("../models/enrollment.model");
+const User = require("../models/user.model");
 const asyncWrapper = require("../middlewares/asnyc.wrapper");
 const responseStatus = require("../constants/response.status");
 const jwt = require("jsonwebtoken");
@@ -26,6 +27,25 @@ const getStudentEnrollments = asyncWrapper(async (req, res) => {
 
 const getCourseStudents = asyncWrapper(async (req, res) => {
   const courseId = req.params.courseId;
+  const enrollments = await Enrollment.find({ course: courseId });
+  const studentsIds = enrollments.map((enrollment) => {
+    return enrollment.student;
+  });
+  const students = await User.find({ _id: { $in: studentsIds } });
+  if (students.length == 0) {
+    return res.json({
+      status: responseStatus.SUCCESS,
+      data: {
+        message: "No Students Enrolled in this Course",
+      },
+    });
+  }
+  res.json({
+    status: responseStatus.SUCCESS,
+    data: {
+      students: students,
+    },
+  });
 });
 const getEnrollmentById = asyncWrapper(async (req, res) => {});
 const enrollCourse = asyncWrapper(async (req, res) => {});
