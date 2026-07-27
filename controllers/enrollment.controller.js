@@ -5,7 +5,7 @@ const responseStatus = require("../constants/response.status");
 const jwt = require("jsonwebtoken");
 
 //controllers
-const getMyEnrollments = asyncWrapper(async (req, res) => {
+const getStudentEnrollments = asyncWrapper(async (req, res) => {
   const studentId = req.params.studentId;
   const enrollments = await Enrollment.find({ student: studentId });
   if (enrollments.length == 0) {
@@ -33,7 +33,7 @@ const cancelEnrollment = asyncWrapper(async (req, res) => {});
 const updateProgress = asyncWrapper(async (req, res) => {});
 
 module.exports = {
-  getMyEnrollments,
+  getStudentEnrollments,
   getCourseStudents,
   getEnrollmentById,
   enrollCourse,

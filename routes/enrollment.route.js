@@ -16,7 +16,7 @@ const {
 
 // Controller imports
 const {
-  getMyEnrollments,
+  getStudentEnrollments,
   getCourseStudents,
   getEnrollmentById,
   enrollCourse,
@@ -36,7 +36,7 @@ enrollmentRouter.get(
   authorize(UserTypes.STUDENT, UserTypes.ADMIN),
   validateStudentId,
   validationMiddleware,
-  getMyEnrollments,
+  getStudentEnrollments,
 );
 
 // 2. getCourseStudents (Instructor & Admin)
