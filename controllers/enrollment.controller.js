@@ -47,9 +47,47 @@ const getCourseStudents = asyncWrapper(async (req, res) => {
     },
   });
 });
-const getEnrollmentById = asyncWrapper(async (req, res) => {});
-const enrollCourse = asyncWrapper(async (req, res) => {});
-const cancelEnrollment = asyncWrapper(async (req, res) => {});
+
+const getEnrollmentById = asyncWrapper(async (req, res) => {
+  const enrollmentId = req.params.enrollmentId;
+  const enrollment = await Enrollment.findById(enrollmentId);
+  if (!enrollment) {
+    return res.status(200).json({
+      status: responseStatus.SUCCESS,
+      data: {
+        message: " Enrollment Not Found ",
+      },
+    });
+  }
+  res.status(200).json({
+    status: responseStatus.SUCCESS,
+    data: {
+      enrollment: enrollment,
+    },
+  });
+});
+
+const enrollCourse = asyncWrapper(async (req, res) => {
+  const courseId = req.params.courseId;
+  const studentId = req.user.id;
+  const enrollment = await Enrollment.create({
+    student: studentId,
+    course: courseId,
+  });
+  return res.status(201).json({
+    status: responseStatus.SUCCESS,
+    data: { enrollment },
+  });
+});
+const cancelEnrollment = asyncWrapper(async (req, res) => {
+  const enrollmentId = req.params.enrollmentId;
+
+  const cancelEnrollment = await Enrollment.findByIdAndDelete(enrollmentId);
+  return res.status(201).json({
+    status: responseStatus.SUCCESS,
+    data: { cancelEnrollment },
+  });
+});
 const updateProgress = asyncWrapper(async (req, res) => {});
 
 module.exports = {

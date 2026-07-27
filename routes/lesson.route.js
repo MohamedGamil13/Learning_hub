@@ -22,71 +22,71 @@ const {
   deleteLesson,
   getLessonById,
   changeLessonOrder,
-  updateLessonOrder,
 } = require("../controllers/lesson.controller");
 
-lessonRouter
-  .get("/", validateCourseId, validationMiddleware, getCourseLessons)
-  .get(
-    "/:lessonId",
-    validateCourseId,
-    (req, res, next) => {
-      console.log(1);
-      next();
-    },
-    validateLessonId,
-    (req, res, next) => {
-      console.log(2);
-      next();
-    },
-    validationMiddleware,
-    (req, res, next) => {
-      console.log(3);
-      next();
-    },
-    getLessonById,
-  )
-  .post(
-    "/",
-    authMiddleware,
-    authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
-    checkCourseOwners,
-    validateCourseId,
-    createLessonValidation,
-    validationMiddleware,
-    addLesson,
-  )
-  .patch(
-    "/:lessonId",
-    authMiddleware,
-    authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
-    checkCourseOwners,
-    validateCourseId,
-    validateLessonId,
-    updateLessonValidation,
-    validationMiddleware,
-    editLesson,
-  )
-  .delete(
-    "/:lessonId",
-    authMiddleware,
-    authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
-    checkCourseOwners,
-    validateCourseId,
-    validateLessonId,
-    validationMiddleware,
-    deleteLesson,
-  )
-  .patch(
-    "/:lessonId/order",
-    authMiddleware,
-    authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
-    checkCourseOwners,
-    validateCourseId,
-    validateLessonId,
-    changeLessonOrderValidation,
-    validationMiddleware,
-    changeLessonOrder,
-  );
+// Public Get Course Lessons
+lessonRouter.get("/", validateCourseId, validationMiddleware, getCourseLessons);
+
+// Public Get Single Lesson By ID
+lessonRouter.get(
+  "/:lessonId",
+  validateCourseId,
+  validateLessonId,
+  validationMiddleware,
+  getLessonById,
+);
+
+// Add Lesson
+lessonRouter.post(
+  "/",
+  authMiddleware,
+  authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
+  validateCourseId,
+  validationMiddleware,
+  checkCourseOwners(),
+  createLessonValidation,
+  validationMiddleware,
+  addLesson,
+);
+
+// Edit Lesson
+lessonRouter.patch(
+  "/:lessonId",
+  authMiddleware,
+  authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
+  validateCourseId,
+  validateLessonId,
+  validationMiddleware,
+  checkCourseOwners(),
+  updateLessonValidation,
+  validationMiddleware,
+  editLesson,
+);
+
+// Delete Lesson
+lessonRouter.delete(
+  "/:lessonId",
+  authMiddleware,
+  authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
+  validateCourseId,
+  validateLessonId,
+  validationMiddleware,
+  checkCourseOwners(),
+  deleteLesson,
+);
+
+// Change Lesson Order
+lessonRouter.patch(
+  "/:lessonId/order",
+  authMiddleware,
+  authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
+  validateCourseId,
+  validateLessonId,
+  validationMiddleware,
+  checkCourseOwners(),
+  changeLessonOrderValidation,
+  validationMiddleware,
+  changeLessonOrder,
+);
 
 module.exports = lessonRouter;

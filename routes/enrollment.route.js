@@ -5,6 +5,7 @@ const authMiddleware = require("../middlewares/auth.middleware");
 const authorize = require("../middlewares/authorization");
 const UserTypes = require("../constants/user.types");
 const validationMiddleware = require("../middlewares/validation.middleware");
+
 // Validation imports
 const {
   validateStudentId,
@@ -23,14 +24,14 @@ const {
   updateProgress,
 } = require("../controllers/enrollment.controller");
 
-//middlewares Imports
+// Middlewares Imports
 const checkEnrollment = require("../middlewares/check.enrollment");
 const checkCourseOwners = require("../middlewares/check.course.owner.middleware");
 
 // Apply auth protection globally to all enrollment routes
 enrollmentRouter.use(authMiddleware);
 
-// 1. getMyEnrollments (For Students & Admins)
+// 1. getStudentEnrollments (For Students & Admins)
 enrollmentRouter.get(
   "/student/:studentId",
   authorize(UserTypes.STUDENT, UserTypes.ADMIN),
@@ -44,8 +45,8 @@ enrollmentRouter.get(
   "/course/:courseId",
   authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
   validateCourseId,
-  checkCourseOwners,
   validationMiddleware,
+  checkCourseOwners(),
   getCourseStudents,
 );
 
@@ -54,8 +55,9 @@ enrollmentRouter.get(
   "/:enrollmentId",
   authorize(UserTypes.ADMIN, UserTypes.INSTRUCTOR),
   validateEnrollmentId,
-  checkEnrollment,
   validationMiddleware,
+  checkEnrollment,
+  checkCourseOwners(),
   getEnrollmentById,
 );
 
@@ -67,7 +69,8 @@ enrollmentRouter.post(
   validationMiddleware,
   enrollCourse,
 );
-// 6. updateProgress (For Students)
+
+// 5. updateProgress (For Students)
 enrollmentRouter.patch(
   "/progress",
   authorize(UserTypes.STUDENT),
@@ -76,13 +79,14 @@ enrollmentRouter.patch(
   updateProgress,
 );
 
-// 5. cancelEnrollment (Student, Admin, Instructor)
+// 6. cancelEnrollment (Student, Admin, Instructor)
 enrollmentRouter.delete(
   "/:enrollmentId",
   authorize(UserTypes.STUDENT, UserTypes.ADMIN, UserTypes.INSTRUCTOR),
   validateEnrollmentId,
-  checkEnrollment,
   validationMiddleware,
+  checkEnrollment,
+  checkCourseOwners(),
   cancelEnrollment,
 );
 
