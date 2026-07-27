@@ -95,5 +95,4 @@ module.exports = {
   getEnrollmentById,
   enrollCourse,
   cancelEnrollment,
-  updateProgress,
 };

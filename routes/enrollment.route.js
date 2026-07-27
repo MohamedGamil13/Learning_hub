@@ -21,7 +21,6 @@ const {
   getEnrollmentById,
   enrollCourse,
   cancelEnrollment,
-  updateProgress,
 } = require("../controllers/enrollment.controller");
 
 // Middlewares Imports
