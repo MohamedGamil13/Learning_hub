@@ -4,7 +4,6 @@ const Enrollment = require("../models/enrollment.model");
 const asyncWrapper = require("../middlewares/asnyc.wrapper");
 const responseStatus = require("../constants/response.status");
 const jwt = require("jsonwebtoken");
-const asnycWrapper = require("../middlewares/asnyc.wrapper");
 const logger = require("../utils/logger");
 
 //controllers (Get Course's Lessons done)
