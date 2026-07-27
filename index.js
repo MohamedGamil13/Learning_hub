@@ -4,16 +4,22 @@ const app = express();
 const connectDB = require("./config/db.config");
 const cors = require("cors");
 const responseStatus = require("./constants/response.status");
+
+//importRoutes
 const userRouter = require("./routes/user.routes");
 const coursesRouter = require("./routes/course.route");
 const lessonRouter = require("./routes/lesson.route");
+const enrollmentRouter = require("./routes/enrollment.route");
 // Middle WaresUsage
 app.use(express.static("uploads"));
 app.use(cors());
 app.use(express.json());
+
+//routes
 app.use("/api/users/", userRouter);
 app.use("/api/courses/", coursesRouter);
 app.use("/api/courses/:courseId/lessons", lessonRouter);
+app.use("/api/enrollments", enrollmentRouter);
 
 //connect DB
 connectDB();
@@ -41,9 +47,7 @@ app.use((error, req, res, next) => {
     },
   });
 });
+
 const server = app.listen(process.env.PORT_NUMBER, () => {
   console.log("Server is running");
 });
-
-//just for Test PR Agent
-//test
