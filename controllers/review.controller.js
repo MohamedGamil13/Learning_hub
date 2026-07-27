@@ -3,76 +3,96 @@ const responseStatus = require("../constants/response.status");
 const logger = require("../utils/logger");
 const Review = require("../models/reviews.model");
 const Course = require("../models/courses.model");
+const recalculateCourseRating;
 
 const getCourseReviews = asyncWrapper(async (req, res) => {
   const courseId = req.params.courseId;
   const reviews = await Review.find({ course: courseId });
-  logger.info("Reviews is ", reviews);
+
   if (reviews.length === 0) {
     return res.json({
       status: responseStatus.SUCCESS,
-      data: {
-        message: "No Reviews Yet",
-      },
+      data: { message: "No Reviews Yet" },
     });
   }
+
   res.json({
     status: responseStatus.SUCCESS,
-    data: {
-      reviews: reviews,
-    },
+    data: { reviews },
   });
 });
+
 const getReviewById = asyncWrapper(async (req, res) => {
-  const review = await Review.findById(id);
-  logger.info("Review is ", review);
+  const { reviewId } = req.params;
+  const review = await Review.findById(reviewId);
+
+  if (!review) {
+    return res.status(404).json({
+      status: responseStatus.FAIL,
+      data: { message: "Review not found" },
+    });
+  }
+
   res.json({
     status: responseStatus.SUCCESS,
-    data: {
-      review: review,
-    },
+    data: { review },
   });
 });
-//averageRating
-//reviewsCount
+
 const addReview = asyncWrapper(async (req, res) => {
+  const { courseId } = req.params; // 🛠️ تم استخراج courseId
   const data = req.body;
-  const newreview = await Review.create({
+
+  const newReview = await Review.create({
     ...data,
-    course: req.params.courseId,
+    course: courseId,
     student: req.user.id,
   });
-  const course = await Course.findById(courseId);
-  updateCourseData(course, newreview.rating);
+
+  // إعادة حساب متوسط تقييم الكورس
+  await recalculateCourseRating(courseId);
+
   res.status(201).json({
     status: responseStatus.SUCCESS,
-    data: {
-      review: newreview,
-    },
+    data: { review: newReview },
   });
 });
 
 const updateReview = asyncWrapper(async (req, res) => {
   const { courseId, reviewId } = req.params;
-  const updatedReview = req.body;
+  const updatedData = req.body;
 
-  const review = await Review.findByIdAndUpdate(reviewId, {
-    ...updateReview,
-    course: req.params.courseId,
-    student: req.user.id, //for ensure that will not changes by User
-  });
-  const course = await Course.findById(courseId);
-  updateCourseData(course, review.rating);
+  const review = await Review.findByIdAndUpdate(
+    reviewId,
+    {
+      ...updatedData,
+      course: courseId,
+      student: req.user.id,
+    },
+    { new: true },
+  );
+
+  await recalculateCourseRating(courseId);
+
   return res.status(200).json({
     status: responseStatus.SUCCESS,
-    data: { review: review },
+    data: { review },
   });
 });
 
 const deleteReview = asyncWrapper(async (req, res) => {
-  const { reviewId } = req.params;
+  const { courseId, reviewId } = req.params;
 
   const review = await Review.findByIdAndDelete(reviewId);
+
+  if (!review) {
+    return res.status(404).json({
+      status: responseStatus.FAIL,
+      data: { message: "Review not found" },
+    });
+  }
+
+  await recalculateCourseRating(courseId);
 
   return res.status(200).json({
     status: responseStatus.SUCCESS,
@@ -87,21 +107,3 @@ module.exports = {
   getCourseReviews,
   getReviewById,
 };
-
-function calcuateNewAvg(oldAvg, reviewsNumber, newRating) {
-  const oldSum = oldAvg * reviewsNumber;
-  const newSum = oldSum + newRating;
-  return newSum / (reviewsNumber + 1);
-}
-async function updateCourseData(course, newRating) {
-  const newAvg = calcuateNewAvg(
-    course.averageRating,
-    course.ratingsCount,
-    newRating,
-  );
-  const newReviewCount = course.ratingsCount + 1;
-  await Course.findByIdAndUpdate(course.id, {
-    reviewCount: newReviewCount,
-    averageRating: newAvg,
-  });
-}
