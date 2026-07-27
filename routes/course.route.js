@@ -57,14 +57,6 @@ coursesRouter
     validationMiddleware,
     addCourse,
   )
-  .post(
-    "/",
-    authMiddleware,
-    authorize(UserTypes.ADMIN, UserTypes.INSTRUCTOR),
-    createCourseValidation,
-    validationMiddleware,
-    addCourse,
-  )
   .delete(
     "/:courseId",
     authMiddleware,

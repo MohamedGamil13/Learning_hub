@@ -66,6 +66,14 @@ enrollmentRouter.post(
   validationMiddleware,
   enrollCourse,
 );
+// 6. updateProgress (For Students)
+enrollmentRouter.patch(
+  "/progress",
+  authorize(UserTypes.STUDENT),
+  updateProgressValidation,
+  validationMiddleware,
+  updateProgress,
+);
 
 // 5. cancelEnrollment (Student, Admin, Instructor)
 enrollmentRouter.delete(
@@ -75,15 +83,6 @@ enrollmentRouter.delete(
   checkEnrollment,
   validationMiddleware,
   cancelEnrollment,
-);
-
-// 6. updateProgress (For Students)
-enrollmentRouter.patch(
-  "/progress",
-  authorize(UserTypes.STUDENT),
-  updateProgressValidation,
-  validationMiddleware,
-  updateProgress,
 );
 
 module.exports = enrollmentRouter;
