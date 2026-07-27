@@ -2,6 +2,7 @@ const asyncWrapper = require("../middlewares/asnyc.wrapper");
 const responseStatus = require("../constants/response.status");
 const logger = require("../utils/logger");
 const Review = require("../models/reviews.model");
+const Course = require("../models/courses.model");
 
 const getCourseReviews = asyncWrapper(async (req, res) => {
   const courseId = req.params.courseId;
@@ -32,7 +33,8 @@ const getReviewById = asyncWrapper(async (req, res) => {
     },
   });
 });
-
+//averageRating
+//reviewsCount
 const addReview = asyncWrapper(async (req, res) => {
   const data = req.body;
   const newreview = await Review.create({
@@ -40,6 +42,8 @@ const addReview = asyncWrapper(async (req, res) => {
     course: req.params.courseId,
     student: req.user.id,
   });
+  const course = await Course.findById(courseId);
+  updateCourseData(course, newreview.rating);
   res.status(201).json({
     status: responseStatus.SUCCESS,
     data: {
@@ -49,7 +53,7 @@ const addReview = asyncWrapper(async (req, res) => {
 });
 
 const updateReview = asyncWrapper(async (req, res) => {
-  const { reviewId } = req.params;
+  const { courseId, reviewId } = req.params;
   const updatedReview = req.body;
 
   const review = await Review.findByIdAndUpdate(reviewId, {
@@ -57,6 +61,8 @@ const updateReview = asyncWrapper(async (req, res) => {
     course: req.params.courseId,
     student: req.user.id, //for ensure that will not changes by User
   });
+  const course = await Course.findById(courseId);
+  updateCourseData(course, review.rating);
   return res.status(200).json({
     status: responseStatus.SUCCESS,
     data: { review: review },
@@ -81,3 +87,21 @@ module.exports = {
   getCourseReviews,
   getReviewById,
 };
+
+function calcuateNewAvg(oldAvg, reviewsNumber, newRating) {
+  const oldSum = oldAvg * reviewsNumber;
+  const newSum = oldSum + newRating;
+  return newSum / (reviewsNumber + 1);
+}
+async function updateCourseData(course, newRating) {
+  const newAvg = calcuateNewAvg(
+    course.averageRating,
+    course.ratingsCount,
+    newRating,
+  );
+  const newReviewCount = course.ratingsCount + 1;
+  await Course.findByIdAndUpdate(course.id, {
+    reviewCount: newReviewCount,
+    averageRating: newAvg,
+  });
+}
