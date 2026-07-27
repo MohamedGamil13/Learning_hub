@@ -22,78 +22,68 @@ const {
   deleteLesson,
   getLessonById,
   changeLessonOrder,
-  updateLessonOrder,
 } = require("../controllers/lesson.controller");
 
-// 1. Get Course Lessons (Public)
+// Public Get Course Lessons
 lessonRouter.get("/", validateCourseId, validationMiddleware, getCourseLessons);
 
-// 2. Get Lesson By ID (Public)
+// Public Get Single Lesson By ID
 lessonRouter.get(
   "/:lessonId",
   validateCourseId,
-  (req, res, next) => {
-    console.log(1);
-    next();
-  },
   validateLessonId,
-  (req, res, next) => {
-    console.log(2);
-    next();
-  },
   validationMiddleware,
-  (req, res, next) => {
-    console.log(3);
-    next();
-  },
   getLessonById,
 );
 
-// 3. Add Lesson (Protected)
+// Add Lesson
 lessonRouter.post(
   "/",
   authMiddleware,
   authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
-  checkCourseOwners,
   validateCourseId,
+  validationMiddleware,
+  checkCourseOwners(),
   createLessonValidation,
   validationMiddleware,
   addLesson,
 );
 
-// 4. Edit Lesson Details (Protected)
+// Edit Lesson
 lessonRouter.patch(
   "/:lessonId",
   authMiddleware,
   authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
-  checkCourseOwners,
   validateCourseId,
   validateLessonId,
+  validationMiddleware,
+  checkCourseOwners(),
   updateLessonValidation,
   validationMiddleware,
   editLesson,
 );
 
-// 5. Delete Lesson (Protected)
+// Delete Lesson
 lessonRouter.delete(
   "/:lessonId",
   authMiddleware,
   authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
-  checkCourseOwners,
   validateCourseId,
   validateLessonId,
   validationMiddleware,
+  checkCourseOwners(),
   deleteLesson,
 );
 
-// 6. Change Lesson Order Specific Route
+// Change Lesson Order
 lessonRouter.patch(
   "/:lessonId/order",
   authMiddleware,
   authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
-  checkCourseOwners,
   validateCourseId,
   validateLessonId,
+  validationMiddleware,
+  checkCourseOwners(),
   changeLessonOrderValidation,
   validationMiddleware,
   changeLessonOrder,
