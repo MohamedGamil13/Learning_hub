@@ -3,6 +3,8 @@ const Enrollment = require("../models/enrollment.model");
 const asyncWrapper = require("../middlewares/asnyc.wrapper");
 const responseStatus = require("../constants/response.status");
 const jwt = require("jsonwebtoken");
+const logger = require("../utils/logger");
+const checkExist = require("../utils/check.exist");
 
 // 1. Get All Courses
 const getAllCourses = asyncWrapper(async (req, res) => {
@@ -23,7 +25,8 @@ const getCourseById = asyncWrapper(async (req, res) => {
     "name email",
   );
 
-  if (!course) {
+  if (!checkExist(course, "Course")) {
+    logger.warn("Course not found", { courseId });
     return res.status(404).json({
       status: responseStatus.FAIL,
       message: "No Course Found",
@@ -84,7 +87,8 @@ const editCourse = asyncWrapper(async (req, res) => {
 
   const course = await Course.findById(courseId);
 
-  if (!course) {
+  if (!checkExist(course, "Course")) {
+    logger.warn("Course not found for edit", { courseId });
     return res.status(404).json({
       status: responseStatus.FAIL,
       data: {
@@ -123,7 +127,8 @@ const editCourse = asyncWrapper(async (req, res) => {
 const deleteCourse = asyncWrapper(async (req, res) => {
   const courseId = req.params.courseId;
   const course = await Course.findByIdAndDelete(courseId);
-  if (!course) {
+  if (!checkExist(course, "Course")) {
+    logger.warn("Course not found for deletion", { courseId });
     return res.status(404).json({
       status: responseStatus.FAIL,
       data: {

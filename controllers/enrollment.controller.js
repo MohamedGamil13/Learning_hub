@@ -4,12 +4,15 @@ const User = require("../models/user.model");
 const asyncWrapper = require("../middlewares/asnyc.wrapper");
 const responseStatus = require("../constants/response.status");
 const jwt = require("jsonwebtoken");
+const logger = require("../utils/logger");
+const checkExist = require("../utils/check.exist");
 
 //controllers
 const getStudentEnrollments = asyncWrapper(async (req, res) => {
   const studentId = req.params.studentId;
   const enrollments = await Enrollment.find({ student: studentId });
-  if (enrollments.length == 0) {
+  if (!checkExist(enrollments, "Enrollments")) {
+    logger.info("No enrollments found for student", { studentId });
     return res.status(200).json({
       status: responseStatus.SUCCESS,
       data: {
@@ -32,7 +35,8 @@ const getCourseStudents = asyncWrapper(async (req, res) => {
     return enrollment.student;
   });
   const students = await User.find({ _id: { $in: studentsIds } });
-  if (students.length == 0) {
+  if (!checkExist(students, "Students")) {
+    logger.info("No students enrolled in course", { courseId });
     return res.json({
       status: responseStatus.SUCCESS,
       data: {
@@ -51,7 +55,8 @@ const getCourseStudents = asyncWrapper(async (req, res) => {
 const getEnrollmentById = asyncWrapper(async (req, res) => {
   const enrollmentId = req.params.enrollmentId;
   const enrollment = await Enrollment.findById(enrollmentId);
-  if (!enrollment) {
+  if (!checkExist(enrollment, "Enrollment")) {
+    logger.warn("Enrollment not found", { enrollmentId });
     return res.status(200).json({
       status: responseStatus.SUCCESS,
       data: {
