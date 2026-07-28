@@ -1,19 +1,16 @@
-const responseStatus = require("../constants/response.status");
-const UserTypes = require("../constants/user.types");
-const logger = require("../utils/logger");
+const AppError = require("../utils/app.error");
 
+/**
+ * Middleware that restricts access to specified roles
+ * @param  {...string} roles - Allowed roles
+ * @returns {Function} Express middleware
+ */
 module.exports = (...roles) => {
   return (req, res, next) => {
-    logger.info("Current User Role is ", req.user.role);
-    if (roles.includes(req.user.role)) {
-      return next();
+    if (!roles.includes(req.user.role)) {
+      throw new AppError("You are not allowed to access this resource", 403);
     }
 
-    return res.status(403).json({
-      status: responseStatus.FAIL,
-      data: {
-        message: "You are not allowed to access this resource",
-      },
-    });
+    next();
   };
 };

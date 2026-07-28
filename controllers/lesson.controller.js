@@ -1,55 +1,34 @@
-const Course = require("../models/courses.model");
 const Lesson = require("../models/lesson.model");
-const Enrollment = require("../models/enrollment.model");
 const asyncWrapper = require("../middlewares/asnyc.wrapper");
-const responseStatus = require("../constants/response.status");
-const jwt = require("jsonwebtoken");
-const logger = require("../utils/logger");
-const checkExist = require("../utils/check.exist");
+const AppError = require("../utils/app.error");
+const { sendSuccess, sendCreated } = require("../utils/api.response");
 
-//controllers (Get Course's Lessons done)
+// Get Course's Lessons
 const getCourseLessons = asyncWrapper(async (req, res) => {
   const { courseId } = req.params;
 
-  const lessons = await Lesson.find({
-    course: courseId,
-  }).sort({
-    order: 1,
-  });
+  const lessons = await Lesson.find({ course: courseId })
+    .sort({ order: 1 })
+    .lean();
 
-  return res.status(200).json({
-    status: responseStatus.SUCCESS,
-    data: {
-      lessons,
-    },
-  });
+  sendSuccess(res, { lessons });
 });
 
-//get Lesson By Id (done)
+// Get Lesson By Id
 const getLessonById = asyncWrapper(async (req, res) => {
   const courseId = req.params.courseId;
   const lessonId = req.params.lessonId;
+
   const lesson = await Lesson.findOne({ course: courseId, _id: lessonId });
 
-  if (!checkExist(lesson, "Lesson")) {
-    logger.warn("Lesson not found", { courseId, lessonId });
-    return res.status(200).json({
-      status: responseStatus.SUCCESS,
-      data: {
-        message: "No Lesson Found",
-        lessons: lesson,
-      },
-    });
+  if (!lesson) {
+    throw new AppError("No Lesson Found", 404);
   }
-  res.status(200).json({
-    status: responseStatus.SUCCESS,
-    data: {
-      lesson: lesson,
-    },
-  });
+
+  sendSuccess(res, { lesson });
 });
 
-//add Lesson
+// Add Lesson
 const addLesson = asyncWrapper(async (req, res) => {
   const { courseId } = req.params;
   const { order } = req.body;
@@ -60,9 +39,7 @@ const addLesson = asyncWrapper(async (req, res) => {
       order: { $gte: order },
     },
     {
-      $inc: {
-        order: 1,
-      },
+      $inc: { order: 1 },
     },
   );
 
@@ -71,13 +48,9 @@ const addLesson = asyncWrapper(async (req, res) => {
     course: courseId,
   });
 
-  res.status(201).json({
-    status: responseStatus.SUCCESS,
-    data: {
-      lesson,
-    },
-  });
+  sendCreated(res, { lesson });
 });
+
 // Edit Lesson
 const editLesson = asyncWrapper(async (req, res) => {
   const { courseId, lessonId } = req.params;
@@ -88,19 +61,13 @@ const editLesson = asyncWrapper(async (req, res) => {
     { new: true, runValidators: true },
   );
 
-  if (!checkExist(updatedLesson, "Lesson")) {
-    logger.warn("Lesson not found for edit", { courseId, lessonId });
-    return res.status(404).json({
-      status: responseStatus.FAIL,
-      data: { message: "Lesson not found for this course" },
-    });
+  if (!updatedLesson) {
+    throw new AppError("Lesson not found for this course", 404);
   }
 
-  res.status(200).json({
-    status: responseStatus.SUCCESS,
-    data: { lesson: updatedLesson },
-  });
+  sendSuccess(res, { lesson: updatedLesson });
 });
+
 // Delete Lesson
 const deleteLesson = asyncWrapper(async (req, res) => {
   const { courseId, lessonId } = req.params;
@@ -110,12 +77,8 @@ const deleteLesson = asyncWrapper(async (req, res) => {
     course: courseId,
   });
 
-  if (!checkExist(lessonToDelete, "Lesson")) {
-    logger.warn("Lesson not found for deletion", { courseId, lessonId });
-    return res.status(404).json({
-      status: responseStatus.FAIL,
-      data: { message: "Lesson not found for this course" },
-    });
+  if (!lessonToDelete) {
+    throw new AppError("Lesson not found for this course", 404);
   }
 
   await Lesson.updateMany(
@@ -123,30 +86,22 @@ const deleteLesson = asyncWrapper(async (req, res) => {
     { $inc: { order: -1 } },
   );
 
-  res.status(200).json({
-    status: responseStatus.SUCCESS,
-    data: null,
-  });
+  sendSuccess(res, null);
 });
+
 // Change Single Lesson Order
 const changeLessonOrder = asyncWrapper(async (req, res) => {
   const { courseId, lessonId } = req.params;
   const { newOrder } = req.body;
 
   if (!newOrder || newOrder < 1) {
-    return res.status(400).json({
-      status: responseStatus.FAIL,
-      data: { message: "Invalid order number provided" },
-    });
+    throw new AppError("Invalid order number provided", 400);
   }
 
   const lesson = await Lesson.findOne({ _id: lessonId, course: courseId });
-  if (!checkExist(lesson, "Lesson")) {
-    logger.warn("Lesson not found for order change", { courseId, lessonId });
-    return res.status(404).json({
-      status: responseStatus.FAIL,
-      data: { message: "Lesson not found for this course" },
-    });
+
+  if (!lesson) {
+    throw new AppError("Lesson not found for this course", 404);
   }
 
   const currentOrder = lesson.order;
@@ -174,21 +129,16 @@ const changeLessonOrder = asyncWrapper(async (req, res) => {
     await lesson.save();
   }
 
-  res.status(200).json({
-    status: responseStatus.SUCCESS,
-    data: { lesson },
-  });
+  sendSuccess(res, { lesson });
 });
+
 // Bulk Update Lessons Order
 const updateLessonOrder = asyncWrapper(async (req, res) => {
   const { courseId } = req.params;
   const { lessonsOrder } = req.body;
 
   if (!Array.isArray(lessonsOrder) || lessonsOrder.length === 0) {
-    return res.status(400).json({
-      status: responseStatus.FAIL,
-      data: { message: "lessonsOrder must be a non-empty array" },
-    });
+    throw new AppError("lessonsOrder must be a non-empty array", 400);
   }
 
   const bulkOps = lessonsOrder.map((item) => ({
@@ -200,10 +150,7 @@ const updateLessonOrder = asyncWrapper(async (req, res) => {
 
   await Lesson.bulkWrite(bulkOps);
 
-  res.status(200).json({
-    status: responseStatus.SUCCESS,
-    data: { message: "Lessons order updated successfully" },
-  });
+  sendSuccess(res, { message: "Lessons order updated successfully" });
 });
 
 module.exports = {

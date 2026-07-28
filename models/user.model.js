@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const UserTypes = require("../constants/user.types");
+
 const Schema = mongoose.Schema;
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -7,11 +8,10 @@ const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const userSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
-
     role: {
       type: String,
       required: true,
-      toLowerCase: true,
+      lowercase: true,
       enum: [
         UserTypes.STUDENT,
         UserTypes.INSTRUCTOR,
@@ -30,11 +30,13 @@ const userSchema = new Schema(
     },
     password: { type: String, required: true, minLength: 8, select: false },
     avatar: { type: String, default: "" },
-    bio: { type: String, required: false },
+    bio: { type: String, default: "" },
   },
   {
     timestamps: true,
   },
 );
+
+userSchema.index({ role: 1 });
 
 module.exports = mongoose.model("User", userSchema);
