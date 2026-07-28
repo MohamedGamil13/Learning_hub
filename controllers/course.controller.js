@@ -1,73 +1,55 @@
 const Course = require("../models/courses.model");
 const Enrollment = require("../models/enrollment.model");
 const asyncWrapper = require("../middlewares/asnyc.wrapper");
-const responseStatus = require("../constants/response.status");
-const jwt = require("jsonwebtoken");
-const logger = require("../utils/logger");
-const checkExist = require("../utils/check.exist");
+const AppError = require("../utils/app.error");
+const { sendSuccess, sendCreated } = require("../utils/api.response");
 
 // 1. Get All Courses
 const getAllCourses = asyncWrapper(async (req, res) => {
-  const allCourses = await Course.find().populate("instructor", "name email");
+  const allCourses = await Course.find()
+    .populate("instructor", "name email")
+    .lean();
 
-  return res.status(200).json({
-    status: responseStatus.SUCCESS,
-    data: { courses: allCourses },
-  });
+  sendSuccess(res, { courses: allCourses });
 });
 
 // 2. Get Single Course By ID
 const getCourseById = asyncWrapper(async (req, res) => {
   const { courseId } = req.params;
 
-  const course = await Course.findById(courseId).populate(
-    "instructor",
-    "name email",
-  );
+  const course = await Course.findById(courseId)
+    .populate("instructor", "name email")
+    .lean();
 
-  if (!checkExist(course, "Course")) {
-    logger.warn("Course not found", { courseId });
-    return res.status(404).json({
-      status: responseStatus.FAIL,
-      message: "No Course Found",
-    });
+  if (!course) {
+    throw new AppError("No Course Found", 404);
   }
 
-  return res.status(200).json({
-    status: responseStatus.SUCCESS,
-    data: { course },
-  });
+  sendSuccess(res, { course });
 });
 
 // 3. Get Enrolled Courses for Logged-in Student
 const getEnrolledCourses = asyncWrapper(async (req, res) => {
   const studentId = req.user.id;
 
-  const enrolledCourses = await Enrollment.find({
-    student: studentId,
-  }).populate("course");
+  const enrolledCourses = await Enrollment.find({ student: studentId })
+    .populate("course")
+    .lean();
 
-  return res.status(200).json({
-    status: responseStatus.SUCCESS,
-    data: { courses: enrolledCourses },
-  });
+  sendSuccess(res, { courses: enrolledCourses });
 });
 
 // 4. Get Added Courses for Logged-in Instructor
 const getAddedCourses = asyncWrapper(async (req, res) => {
   const instructorId = req.user.id;
 
-  const addedCourses = await Course.find({ instructor: instructorId });
+  const addedCourses = await Course.find({ instructor: instructorId }).lean();
 
-  return res.status(200).json({
-    status: responseStatus.SUCCESS,
-    data: { courses: addedCourses },
-  });
+  sendSuccess(res, { courses: addedCourses });
 });
 
 // 5. Add New Course
 const addCourse = asyncWrapper(async (req, res) => {
-  //ensure that this Course's owner
   const newCourse = await Course.create({
     ...req.body,
     instructor: req.user.id,
@@ -75,73 +57,36 @@ const addCourse = asyncWrapper(async (req, res) => {
 
   await newCourse.populate("instructor", "name email");
 
-  return res.status(201).json({
-    status: responseStatus.SUCCESS,
-    data: { course: newCourse },
-  });
+  sendCreated(res, { course: newCourse });
 });
 
-//edit Course
+// 6. Edit Course
 const editCourse = asyncWrapper(async (req, res) => {
   const { courseId } = req.params;
 
-  const course = await Course.findById(courseId);
-
-  if (!checkExist(course, "Course")) {
-    logger.warn("Course not found for edit", { courseId });
-    return res.status(404).json({
-      status: responseStatus.FAIL,
-      data: {
-        message: "Course Not Found",
-      },
-    });
-  }
-
-  const token = authHeader.split(" ")[1];
-  const decoded = jwt.verify(token, process.env.JWT_SECERT_KEY);
-
-  const isOwner = course.createdBy?.toString() === decoded.id;
-  if (!isOwner) {
-    return res.status(401).json({
-      status: responseStatus.FAIL,
-      data: {
-        message: "Not Authorized (Not Course's Owner)",
-      },
-    });
-  }
-
-  // 4. Update the course
   const updatedCourse = await Course.findByIdAndUpdate(courseId, req.body, {
     new: true,
     runValidators: true,
   });
 
-  return res.status(200).json({
-    status: responseStatus.SUCCESS,
-    data: {
-      course: updatedCourse,
-    },
-  });
+  if (!updatedCourse) {
+    throw new AppError("Course Not Found", 404);
+  }
+
+  sendSuccess(res, { course: updatedCourse });
 });
-//delete course done
+
+// 7. Delete Course
 const deleteCourse = asyncWrapper(async (req, res) => {
   const courseId = req.params.courseId;
+
   const course = await Course.findByIdAndDelete(courseId);
-  if (!checkExist(course, "Course")) {
-    logger.warn("Course not found for deletion", { courseId });
-    return res.status(404).json({
-      status: responseStatus.FAIL,
-      data: {
-        message: "Course Not Found",
-      },
-    });
+
+  if (!course) {
+    throw new AppError("Course Not Found", 404);
   }
-  res.status(200).json({
-    status: responseStatus.SUCCESS,
-    data: {
-      message: "Course Deleted Successfully",
-    },
-  });
+
+  sendSuccess(res, { message: "Course Deleted Successfully" });
 });
 
 module.exports = {

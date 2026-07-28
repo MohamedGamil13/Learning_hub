@@ -1,86 +1,63 @@
 const asyncWrapper = require("../middlewares/asnyc.wrapper");
-const responseStatus = require("../constants/response.status");
-const logger = require("../utils/logger");
 const Review = require("../models/reviews.model");
-const Course = require("../models/courses.model");
 const recalculateCourseRating = require("../utils/recalculate.course.rating");
-
-const checkExist = require("../utils/check.exist");
+const AppError = require("../utils/app.error");
+const { sendSuccess, sendCreated } = require("../utils/api.response");
 
 const getCourseReviews = asyncWrapper(async (req, res) => {
   const courseId = req.params.courseId;
-  const reviews = await Review.find({ course: courseId });
 
-  if (!checkExist(reviews, "Reviews")) {
-    logger.info("No reviews found for course", { courseId });
-    return res.json({
-      status: responseStatus.SUCCESS,
-      data: { message: "No Reviews Yet" },
-    });
-  }
+  const reviews = await Review.find({ course: courseId }).lean();
 
-  res.json({
-    status: responseStatus.SUCCESS,
-    data: { reviews },
-  });
+  sendSuccess(res, { reviews });
 });
 
 const getReviewById = asyncWrapper(async (req, res) => {
   const { reviewId } = req.params;
-  const review = await Review.findById(reviewId);
 
-  if (!checkExist(review, "Review")) {
-    logger.warn("Review not found", { reviewId });
-    return res.status(404).json({
-      status: responseStatus.FAIL,
-      data: { message: "Review not found" },
-    });
+  const review = await Review.findById(reviewId).lean();
+
+  if (!review) {
+    throw new AppError("Review not found", 404);
   }
 
-  res.json({
-    status: responseStatus.SUCCESS,
-    data: { review },
-  });
+  sendSuccess(res, { review });
 });
 
 const addReview = asyncWrapper(async (req, res) => {
   const { courseId } = req.params;
-  const data = req.body;
 
   const newReview = await Review.create({
-    ...data,
+    ...req.body,
     course: courseId,
     student: req.user.id,
   });
 
   await recalculateCourseRating(courseId);
 
-  res.status(201).json({
-    status: responseStatus.SUCCESS,
-    data: { review: newReview },
-  });
+  sendCreated(res, { review: newReview });
 });
 
 const updateReview = asyncWrapper(async (req, res) => {
   const { courseId, reviewId } = req.params;
-  const updatedData = req.body;
 
   const review = await Review.findByIdAndUpdate(
     reviewId,
     {
-      ...updatedData,
+      ...req.body,
       course: courseId,
       student: req.user.id,
     },
-    { new: true },
+    { new: true, runValidators: true },
   );
+
+  if (!review) {
+    throw new AppError("Review not found", 404);
+  }
 
   await recalculateCourseRating(courseId);
 
-  return res.status(200).json({
-    status: responseStatus.SUCCESS,
-    data: { review },
-  });
+  sendSuccess(res, { review });
 });
 
 const deleteReview = asyncWrapper(async (req, res) => {
@@ -88,20 +65,13 @@ const deleteReview = asyncWrapper(async (req, res) => {
 
   const review = await Review.findByIdAndDelete(reviewId);
 
-  if (!checkExist(review, "Review")) {
-    logger.warn("Review not found for deletion", { reviewId });
-    return res.status(404).json({
-      status: responseStatus.FAIL,
-      data: { message: "Review not found" },
-    });
+  if (!review) {
+    throw new AppError("Review not found", 404);
   }
 
   await recalculateCourseRating(courseId);
 
-  return res.status(200).json({
-    status: responseStatus.SUCCESS,
-    data: null,
-  });
+  sendSuccess(res, null);
 });
 
 module.exports = {
