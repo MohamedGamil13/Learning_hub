@@ -1,6 +1,6 @@
 const User = require("../models/user.model");
+
 const isEmailExist = async (value) => {
-  console.log(value);
   const existingUser = await User.findOne({ email: value });
 
   if (existingUser) {
