@@ -1,12 +1,12 @@
 const jwt = require("jsonwebtoken");
+const AppError = require("../utils/app.error");
+const asyncWrapper = require("./asnyc.wrapper");
 
-module.exports = (req, res, next) => {
+module.exports = asyncWrapper(async (req, res, next) => {
   const authHeader = req.headers.authorization || req.headers.Authorization;
 
   if (!authHeader) {
-    return res
-      .status(401)
-      .json({ status: "fail", message: "Token is required / Unauthorized" });
+    throw new AppError("Token is required / Unauthorized", 401);
   }
 
   const parts = authHeader.split(" ");
@@ -14,20 +14,13 @@ module.exports = (req, res, next) => {
   const token = parts[1];
 
   if (bearer !== "Bearer" || !token) {
-    return res.status(401).json({
-      status: "fail",
-      message: "Invalid Token format. Format must be: Bearer <token>",
-    });
+    throw new AppError(
+      "Invalid Token format. Format must be: Bearer <token>",
+      401,
+    );
   }
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECERT_KEY);
-
-    req.user = decoded;
-    next();
-  } catch (err) {
-    return res
-      .status(401)
-      .json({ status: "fail", message: "Invalid or expired token" });
-  }
-};
+  const decoded = jwt.verify(token, process.env.JWT_SECERT_KEY);
+  req.user = decoded;
+  next();
+});
