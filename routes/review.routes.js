@@ -4,11 +4,8 @@ const reviewRouter = express.Router();
 const authMiddleware = require("../middlewares/auth.middleware");
 const authorize = require("../middlewares/authorization");
 const UserTypes = require("../constants/user.types");
-
-// validation import
 const validationMiddleware = require("../middlewares/validation.middleware");
 
-// 1. Validation Imports
 const {
   validateCourseId,
   validateReviewId,
@@ -16,7 +13,6 @@ const {
   updateReviewValidation,
 } = require("../validators/review.validation");
 
-// Controller imports
 const {
   addReview,
   updateReview,
@@ -25,13 +21,10 @@ const {
   getReviewById,
 } = require("../controllers/review.controller");
 
-// 3. Custom Middlewares
 const checkReviewOwner = require("../middlewares/check.review.owner");
-const checkReviewExist = require("../middlewares/check.review.exist");
 
 // ==================== PUBLIC ROUTES ====================
 
-// Get All Reviews
 reviewRouter.get(
   "/course/:courseId",
   validateCourseId,
@@ -39,21 +32,17 @@ reviewRouter.get(
   getCourseReviews,
 );
 
-// Get  Review
 reviewRouter.get(
   "/:reviewId",
   validateReviewId,
   validationMiddleware,
-  checkReviewExist,
   getReviewById,
 );
 
 // ==================== PROTECTED ROUTES ====================
 
-// Apply Auth globally for all modifying routes below
 reviewRouter.use(authMiddleware);
 
-// Add Review (Students Only)
 reviewRouter.post(
   "/:courseId",
   authorize(UserTypes.STUDENT),
@@ -69,7 +58,7 @@ reviewRouter.patch(
   validateReviewId,
   updateReviewValidation,
   validationMiddleware,
-  checkReviewExist,
+  checkReviewOwner,
   updateReview,
 );
 
@@ -78,7 +67,7 @@ reviewRouter.delete(
   authorize(UserTypes.STUDENT, UserTypes.INSTRUCTOR, UserTypes.ADMIN),
   validateReviewId,
   validationMiddleware,
-  checkReviewExist,
+  checkReviewOwner,
   deleteReview,
 );
 

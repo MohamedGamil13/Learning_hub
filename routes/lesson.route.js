@@ -22,6 +22,7 @@ const {
   deleteLesson,
   getLessonById,
   changeLessonOrder,
+  updateLessonOrder,
 } = require("../controllers/lesson.controller");
 
 // Public Get Course Lessons
@@ -36,10 +37,12 @@ lessonRouter.get(
   getLessonById,
 );
 
+// Protected Routes
+lessonRouter.use(authMiddleware);
+
 // Add Lesson
 lessonRouter.post(
   "/",
-  authMiddleware,
   authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
   validateCourseId,
   validationMiddleware,
@@ -52,7 +55,6 @@ lessonRouter.post(
 // Edit Lesson
 lessonRouter.patch(
   "/:lessonId",
-  authMiddleware,
   authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
   validateCourseId,
   validateLessonId,
@@ -66,7 +68,6 @@ lessonRouter.patch(
 // Delete Lesson
 lessonRouter.delete(
   "/:lessonId",
-  authMiddleware,
   authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
   validateCourseId,
   validateLessonId,
@@ -78,7 +79,6 @@ lessonRouter.delete(
 // Change Lesson Order
 lessonRouter.patch(
   "/:lessonId/order",
-  authMiddleware,
   authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
   validateCourseId,
   validateLessonId,
@@ -87,6 +87,16 @@ lessonRouter.patch(
   changeLessonOrderValidation,
   validationMiddleware,
   changeLessonOrder,
+);
+
+// Bulk Update Lessons Order
+lessonRouter.patch(
+  "/order",
+  authorize(UserTypes.INSTRUCTOR, UserTypes.ADMIN),
+  validateCourseId,
+  validationMiddleware,
+  checkCourseOwners(),
+  updateLessonOrder,
 );
 
 module.exports = lessonRouter;
