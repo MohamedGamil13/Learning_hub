@@ -5,6 +5,7 @@ const asyncWrapper = require("../middlewares/asnyc.wrapper");
 const responseStatus = require("../constants/response.status");
 const jwt = require("jsonwebtoken");
 const logger = require("../utils/logger");
+const checkExist = require("../utils/check.exist");
 
 //controllers (Get Course's Lessons done)
 const getCourseLessons = asyncWrapper(async (req, res) => {
@@ -27,13 +28,11 @@ const getCourseLessons = asyncWrapper(async (req, res) => {
 //get Lesson By Id (done)
 const getLessonById = asyncWrapper(async (req, res) => {
   const courseId = req.params.courseId;
-  logger.info(courseId);
   const lessonId = req.params.lessonId;
-  logger.info(lessonId);
   const lesson = await Lesson.findOne({ course: courseId, _id: lessonId });
-  logger.info(lesson);
 
-  if (!lesson) {
+  if (!checkExist(lesson, "Lesson")) {
+    logger.warn("Lesson not found", { courseId, lessonId });
     return res.status(200).json({
       status: responseStatus.SUCCESS,
       data: {
@@ -89,7 +88,8 @@ const editLesson = asyncWrapper(async (req, res) => {
     { new: true, runValidators: true },
   );
 
-  if (!updatedLesson) {
+  if (!checkExist(updatedLesson, "Lesson")) {
+    logger.warn("Lesson not found for edit", { courseId, lessonId });
     return res.status(404).json({
       status: responseStatus.FAIL,
       data: { message: "Lesson not found for this course" },
@@ -110,7 +110,8 @@ const deleteLesson = asyncWrapper(async (req, res) => {
     course: courseId,
   });
 
-  if (!lessonToDelete) {
+  if (!checkExist(lessonToDelete, "Lesson")) {
+    logger.warn("Lesson not found for deletion", { courseId, lessonId });
     return res.status(404).json({
       status: responseStatus.FAIL,
       data: { message: "Lesson not found for this course" },
@@ -140,7 +141,8 @@ const changeLessonOrder = asyncWrapper(async (req, res) => {
   }
 
   const lesson = await Lesson.findOne({ _id: lessonId, course: courseId });
-  if (!lesson) {
+  if (!checkExist(lesson, "Lesson")) {
+    logger.warn("Lesson not found for order change", { courseId, lessonId });
     return res.status(404).json({
       status: responseStatus.FAIL,
       data: { message: "Lesson not found for this course" },

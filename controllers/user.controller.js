@@ -5,6 +5,8 @@ const UserTypes = require("../constants/user.types");
 const displayUser = require("../utils/display.user");
 const responseStatus = require("../constants/response.status");
 const jwtGenerator = require("../utils/generate.token");
+const logger = require("../utils/logger");
+const checkExist = require("../utils/check.exist");
 
 const saltRounds = 10;
 
@@ -40,7 +42,8 @@ const loginController = asnycWrapper(async (req, res) => {
 
   const user = await userModel.findOne({ email }).select("+password");
 
-  if (!user) {
+  if (!checkExist(user, "User")) {
+    logger.warn("Login failed - user not found", { email });
     return res.status(400).json({
       status: responseStatus.FAIL,
       message: "User does not exist",
@@ -50,6 +53,7 @@ const loginController = asnycWrapper(async (req, res) => {
   const isPasswordTrue = await bcrypt.compare(password, user.password);
 
   if (!isPasswordTrue) {
+    logger.warn("Login failed - wrong password", { email });
     return res.status(400).json({
       status: responseStatus.FAIL,
       message: "Wrong password",
