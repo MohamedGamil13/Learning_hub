@@ -1,6 +1,6 @@
 # LearningHub
 
-A comprehensive **online learning platform** backend API built with Node.js, Express, and MongoDB. LearningHub enables instructors to create and manage courses with lessons, while students can enroll, track progress, and access educational content. The platform supports multiple user roles with role-based access control.
+A comprehensive **online learning platform** backend API built with Node.js, Express, and MongoDB. LearningHub enables instructors to create and manage courses with lessons, while students can enroll, track progress, review courses, and access educational content. The platform supports multiple user roles with role-based access control.
 
 ## Table of Contents
 
@@ -16,6 +16,7 @@ A comprehensive **online learning platform** backend API built with Node.js, Exp
   - [Running the Application](#running-the-application)
 - [Data Models](#data-models)
 - [Authentication & Authorization](#authentication--authorization)
+- [Error Handling & Response Format](#error-handling--response-format)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -23,14 +24,16 @@ A comprehensive **online learning platform** backend API built with Node.js, Exp
 
 - **User Management** – Registration, authentication, and role-based profiles (Student, Instructor, Admin, Guest)
 - **Course Management** – Instructors can create, update, delete, and publish courses with thumbnails, pricing, and ratings
-- **Lesson Management** – Organize course content into structured lessons with video URLs, duration, ordering, and preview options
+- **Lesson Management** – Organize course content into structured lessons with video URLs, duration, ordering, preview options, and bulk reordering
 - **Enrollment System** – Students can enroll in courses, track learning progress (0–100%), and cancel enrollments
+- **Reviews & Ratings** – Students can rate and review courses; average rating auto-recalculates on changes
 - **Role-Based Access Control (RBAC)** – Granular permissions ensuring only authorized users can perform specific actions
 - **Input Validation** – Comprehensive validation using `express-validator` for all API endpoints
 - **JWT Authentication** – Secure token-based authentication with Bearer tokens
-- **Error Handling** – Global error handling middleware with consistent response format
+- **Unified Error Handling** – Global error handling middleware with consistent response format, including CastError, duplicate key, and validation error handling
 - **CORS Support** – Cross-origin resource sharing enabled for frontend integration
 - **Static File Serving** – Upload and serve course thumbnails and user avatars
+- **HTTP Logging** – Request logging via Morgan in development mode
 
 ## Tech Stack
 
@@ -38,7 +41,7 @@ A comprehensive **online learning platform** backend API built with Node.js, Exp
 | ------------------------- | --------------------------- |
 | **Runtime**               | Node.js                     |
 | **Framework**             | Express.js v5.2.1           |
-| **Database**              | MongoDB                     |
+| **Database**              | MongoDB v7.5.0              |
 | **ODM**                   | Mongoose v9.8.0             |
 | **Authentication**        | JSON Web Token (JWT) v9.0.3 |
 | **Password Hashing**      | bcrypt v6.0.0               |
@@ -65,7 +68,8 @@ LearningHub follows a **Layered Architecture** pattern with clear separation of 
 │  └─────────────────────────────────────────────────────────┘ │
 │  ┌─────────────────────────────────────────────────────────┐ │
 │  │                      Routes Layer                        │ │
-│  │  /api/users  /api/courses  /api/lessons  /api/enrollments│ │
+│  │  /api/users  /api/courses  /api/lessons                  │ │
+│  │  /api/enrollments  /api/reviews                          │ │
 │  └─────────────────────────────────────────────────────────┘ │
 │  ┌─────────────────────────────────────────────────────────┐ │
 │  │                   Controllers Layer                      │ │
@@ -73,7 +77,7 @@ LearningHub follows a **Layered Architecture** pattern with clear separation of 
 │  └─────────────────────────────────────────────────────────┘ │
 │  ┌─────────────────────────────────────────────────────────┐ │
 │  │                      Models Layer                        │ │
-│  │  User, Course, Lesson, Enrollment (Mongoose Schemas)     │ │
+│  │  User, Course, Lesson, Enrollment, Review (Mongoose)     │ │
 │  └─────────────────────────────────────────────────────────┘ │
 └───────────────────────────────┬─────────────────────────────┘
                                 │
@@ -96,47 +100,55 @@ LearningHub follows a **Layered Architecture** pattern with clear separation of 
 ```
 LearningHub/
 ├── config/
-│   └── db.config.js          # MongoDB connection configuration
+│   └── db.config.js              # MongoDB connection configuration
 ├── constants/
-│   ├── response.status.js    # Standardized response status constants
-│   └── user.types.js         # User role definitions (student, instructor, admin, guest)
+│   ├── response.status.js        # Standardized response status constants (success, error, fail)
+│   └── user.types.js             # User role definitions (student, instructor, admin, guest)
 ├── controllers/
-│   ├── course.controller.js  # Course CRUD operations & business logic
-│   ├── enrollment.controller.js # Enrollment management & progress tracking
-│   ├── lesson.controller.js  # Lesson CRUD operations within courses
-│   └── user.controller.js    # User registration & authentication
+│   ├── course.controller.js      # Course CRUD operations & business logic
+│   ├── enrollment.controller.js  # Enrollment management & progress tracking
+│   ├── lesson.controller.js      # Lesson CRUD operations within courses
+│   ├── review.controller.js      # Review CRUD & rating management
+│   └── user.controller.js        # User registration & authentication
 ├── middlewares/
-│   ├── asnyc.wrapper.js      # Async error handling wrapper
-│   ├── auth.middleware.js    # JWT token verification
-│   ├── authorization.js      # Role-based access control
-│   ├── check.course.owner.middleware.js # Course ownership validation
-│   ├── check.enrollment.js   # Enrollment existence validation
-│   └── validation.middleware.js # Centralized validation error handling
+│   ├── asnyc.wrapper.js          # Async error handling wrapper (handles CastError, duplicate key, ValidationError)
+│   ├── auth.middleware.js        # JWT token verification
+│   ├── authorization.js          # Role-based access control
+│   ├── check.course.owner.middleware.js # Course ownership validation (supports courseId & enrollmentId)
+│   ├── check.review.owner.js     # Review ownership validation
+│   └── validation.middleware.js  # Centralized validation error handling
 ├── models/
-│   ├── courses.model.js      # Course schema with instructor, pricing, ratings
-│   ├── enrollment.model.js   # Student-course enrollment with progress tracking
-│   ├── lesson.model.js       # Lesson schema with video, duration, ordering
-│   └── user.model.js         # User schema with roles, authentication
+│   ├── courses.model.js          # Course schema with instructor, pricing, ratings
+│   ├── enrollment.model.js       # Student-course enrollment with progress tracking
+│   ├── lesson.model.js           # Lesson schema with video, duration, ordering
+│   ├── reviews.model.js          # Review schema with rating, comment, student-course uniqueness
+│   └── user.model.js             # User schema with roles, authentication
 ├── routes/
-│   ├── course.route.js       # Course API endpoints
-│   ├── enrollment.route.js   # Enrollment API endpoints
-│   ├── lesson.route.js       # Lesson API endpoints (nested under courses)
-│   └── user.routes.js        # User authentication endpoints
+│   ├── course.route.js           # Course API endpoints
+│   ├── enrollment.route.js       # Enrollment API endpoints
+│   ├── lesson.route.js           # Lesson API endpoints (nested under courses)
+│   ├── review.routes.js          # Review API endpoints
+│   └── user.routes.js            # User authentication endpoints
 ├── utils/
-│   ├── check.email.exist.js  # Email uniqueness validation utility
-│   ├── display.user.js       # User data formatting utility
-│   ├── generate.token.js     # JWT token generation (10min expiry)
-│   └── logger.js             # Application logging utility
+│   ├── api.response.js           # Unified API response handler (sendSuccess, sendCreated, sendError)
+│   ├── app.error.js              # Custom error class with statusCode and status properties
+│   ├── check.email.exist.js      # Email uniqueness validation utility
+│   ├── check.exist.js            # Generic existence check utility (null, undefined, empty array)
+│   ├── display.user.js           # User data formatting utility (strips password & __v)
+│   ├── generate.token.js         # JWT token generation (10min expiry)
+│   ├── logger.js                 # Application logging utility
+│   └── recalculate.course.rating.js # Auto-recalculate course average rating from reviews
 ├── validators/
-│   ├── course.validation.js  # Course input validation rules
-│   ├── enrollment.validation.js # Enrollment validation rules
-│   ├── lesson.validation.js  # Lesson input validation rules
-│   └── users.validator.js    # User registration/login validation
-├── uploads/                  # Static directory for uploaded files (thumbnails, avatars)
-├── .gitignore                # Git ignore rules (.env, DB_details.txt)
-├── index.js                  # Application entry point & server setup
-├── package.json              # Dependencies & scripts
-└── README.md                 # This file
+│   ├── course.validation.js      # Course input validation rules
+│   ├── enrollment.validation.js  # Enrollment validation rules
+│   ├── lesson.validation.js      # Lesson input validation rules
+│   ├── review.validation.js      # Review input validation rules
+│   └── users.validator.js        # User registration/login validation
+├── uploads/                      # Static directory for uploaded files (thumbnails, avatars)
+├── .gitignore                    # Git ignore rules (.env, DB_details.txt)
+├── index.js                      # Application entry point & server setup
+├── package.json                  # Dependencies & scripts
+└── README.md                     # This file
 ```
 
 ### Directory & File Descriptions
@@ -184,7 +196,8 @@ LearningHub/
 | POST   | `/api/courses/:courseId/lessons`                 | Add lesson to course         | Instructor, Admin (owner only) |
 | PATCH  | `/api/courses/:courseId/lessons/:lessonId`       | Update lesson                | Instructor, Admin (owner only) |
 | DELETE | `/api/courses/:courseId/lessons/:lessonId`       | Delete lesson                | Instructor, Admin (owner only) |
-| PATCH  | `/api/courses/:courseId/lessons/:lessonId/order` | Change lesson order          | Instructor, Admin (owner only) |
+| PATCH  | `/api/courses/:courseId/lessons/:lessonId/order` | Change single lesson order   | Instructor, Admin (owner only) |
+| PATCH  | `/api/courses/:courseId/lessons/order`           | Bulk update lessons order    | Instructor, Admin (owner only) |
 
 ### Enrollments
 
@@ -192,9 +205,19 @@ LearningHub/
 | ------ | ------------------------------------- | -------------------------- | ------------------------------ |
 | GET    | `/api/enrollments/student/:studentId` | Get student's enrollments  | Student, Admin                 |
 | GET    | `/api/enrollments/course/:courseId`   | Get all students in course | Instructor, Admin (owner only) |
-| GET    | `/api/enrollments/:enrollmentId`      | Get enrollment details     | Instructor, Admin              |
+| GET    | `/api/enrollments/:enrollmentId`      | Get enrollment details     | Admin, Instructor (owner only) |
 | POST   | `/api/enrollments/:courseId`          | Enroll in course           | Student                        |
-| DELETE | `/api/enrollments/:enrollmentId`      | Cancel enrollment          | Student, Instructor, Admin     |
+| DELETE | `/api/enrollments/:enrollmentId`      | Cancel enrollment          | Student, Admin, Instructor     |
+
+### Reviews
+
+| Method | Endpoint                        | Description                | Access                                  |
+| ------ | ------------------------------- | -------------------------- | --------------------------------------- |
+| GET    | `/api/reviews/course/:courseId` | Get all reviews for course | Public                                  |
+| GET    | `/api/reviews/:reviewId`        | Get review by ID           | Public                                  |
+| POST   | `/api/reviews/:courseId`        | Add review to course       | Student                                 |
+| PATCH  | `/api/reviews/:reviewId`        | Update review              | Student (owner only)                    |
+| DELETE | `/api/reviews/:reviewId`        | Delete review              | Student, Instructor, Admin (owner only) |
 
 ## Getting Started
 
@@ -296,8 +319,8 @@ curl -X POST http://localhost:3000/api/users/register \
 ```javascript
 {
   name: String,           // Required, trimmed
-  email: String,          // Required, unique, validated
-  password: String,       // Required, min 8 chars, hashed with bcrypt
+  email: String,          // Required, unique, validated with regex
+  password: String,       // Required, min 8 chars, hashed with bcrypt, excluded from queries by default
   role: String,           // Enum: student, instructor, admin, guest (default: student)
   avatar: String,         // Optional, URL to avatar image
   bio: String,            // Optional
@@ -310,14 +333,16 @@ curl -X POST http://localhost:3000/api/users/register \
 
 ```javascript
 {
-  title: String,                    // Required
-  description: String,              // Required
-  instructor: ObjectId (ref: User), // Required, references User
+  title: String,                    // Required, trimmed
+  description: String,              // Required, trimmed
+  instructor: ObjectId (ref: User), // Required, references User (indexed)
   price: Number,                    // Required, min 0
-  thumbnail: String,                // Optional, URL to thumbnail
-  published: Boolean,               // Default: false
-  averageRating: Number,            // Default: 0
-  ratingsCount: Number,             // Default: 0
+  thumbnail: String,                // Optional, URL to thumbnail (default: "")
+  published: Boolean,               // Default: false (indexed)
+  averageRating: Number,            // Default: 0, auto-calculated from reviews
+  ratingsCount: Number,             // Default: 0, auto-calculated from reviews
+  createdAt: Date,                  // Auto-generated
+  updatedAt: Date                   // Auto-updated
 }
 ```
 
@@ -325,11 +350,11 @@ curl -X POST http://localhost:3000/api/users/register \
 
 ```javascript
 {
-  course: ObjectId (ref: Course), // Required, references Course
+  course: ObjectId (ref: Course), // Required, references Course (indexed)
   title: String,                  // Required, trimmed
-  description: String,            // Optional
-  videoUrl: String,               // Required
-  duration: Number,               // Default: 0 (minutes)
+  description: String,            // Optional, trimmed (default: "")
+  videoUrl: String,               // Required, trimmed
+  duration: Number,               // Default: 0 (minutes), min 0
   order: Number,                  // Required, min 1 (lesson sequence)
   isPreview: Boolean,             // Default: false (free preview)
   createdAt: Date,                // Auto-generated
@@ -344,9 +369,24 @@ curl -X POST http://localhost:3000/api/users/register \
   student: ObjectId (ref: User),  // Required, references User
   course: ObjectId (ref: Course), // Required, references Course
   progress: Number,               // 0-100, default: 0
-  enrollmentAt: Date,             // Created timestamp
+  enrollmentAt: Date,             // Created timestamp (custom name)
   updatedAt: Date                 // Updated timestamp
 }
+// Compound unique index on { student, course } prevents duplicate enrollments
+```
+
+### Review
+
+```javascript
+{
+  course: ObjectId (ref: Course), // Required, references Course (indexed)
+  student: ObjectId (ref: User),  // Required, references User
+  comment: String,                // Optional, trimmed
+  rating: Number,                 // Required, min 1, max 5
+  createdAt: Date,                // Auto-generated
+  updatedAt: Date                 // Auto-updated
+}
+// Compound unique index on { student, course } ensures one review per student per course
 ```
 
 ## Authentication & Authorization
@@ -362,17 +402,67 @@ curl -X POST http://localhost:3000/api/users/register \
 
 The application implements Role-Based Access Control with four roles:
 
-| Role           | Permissions                                                   |
-| -------------- | ------------------------------------------------------------- |
-| **Student**    | Enroll in courses, view own progress, access enrolled content |
-| **Instructor** | Create/manage own courses & lessons, view enrolled students   |
-| **Admin**      | Full access to all resources and operations                   |
-| **Guest**      | View public courses and lessons only                          |
+| Role           | Permissions                                                                   |
+| -------------- | ----------------------------------------------------------------------------- |
+| **Student**    | Enroll in courses, view own progress, access enrolled content, review courses |
+| **Instructor** | Create/manage own courses & lessons, view enrolled students                   |
+| **Admin**      | Full access to all resources and operations                                   |
+| **Guest**      | View public courses and lessons only                                          |
 
 Protected routes require:
 
 1. Valid JWT token in `Authorization` header
 2. Appropriate user role for the operation
+
+### Ownership Checks
+
+- **Course Ownership**: Instructors can only modify their own courses. The `check.course.owner.middleware.js` middleware supports both direct `courseId` param and `enrollmentId` param lookup. Admin users bypass ownership checks.
+- **Review Ownership**: Students can only modify their own reviews. The `check.review.owner.js` middleware ensures the authenticated user is the review author (admin users bypass this check).
+
+## Error Handling & Response Format
+
+### Unified Response Format
+
+All API responses follow a consistent structure:
+
+```json
+{
+  "status": "success" | "fail" | "error",
+  "message": "Optional message string",
+  "data": { ... }
+}
+```
+
+### Response Helpers (`utils/api.response.js`)
+
+| Function      | HTTP Status   | Usage                              |
+| ------------- | ------------- | ---------------------------------- |
+| `sendSuccess` | 200           | Successful GET/PATCH/DELETE        |
+| `sendCreated` | 201           | Successful POST (resource created) |
+| `sendError`   | 400 (default) | Client error responses             |
+
+### Global Error Handling
+
+The async wrapper (`middlewares/asnyc.wrapper.js`) automatically catches errors and handles common Mongoose errors:
+
+| Error Type            | HTTP Status  | Description                        |
+| --------------------- | ------------ | ---------------------------------- |
+| `CastError`           | 400          | Invalid MongoDB ID format          |
+| Duplicate Key (11000) | 409          | Duplicate value for unique field   |
+| `ValidationError`     | 400          | Mongoose schema validation failure |
+| Custom `AppError`     | As specified | Application-level errors           |
+| Unhandled Errors      | 500          | Internal server errors             |
+
+### Custom Error Class (`utils/app.error.js`)
+
+```javascript
+class AppError extends Error {
+  constructor(message, statusCode) {
+    // statusCode 4xx → status: "fail"
+    // statusCode 5xx → status: "error"
+  }
+}
+```
 
 ## Contributing
 
